@@ -17,7 +17,7 @@ const handle = app.getRequestHandler()
 app.prepare().then(() => {
   const server = express()
   const octokit = new Octokit({
-    auth: process.env.GITHUB_KEY
+    auth: `token ${process.env.GITHUB_KEY}`
   })
 
   server.use(bodyParser.json())

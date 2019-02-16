@@ -30,7 +30,7 @@ contract Bountibot is Ownable {
     payoutAmount = _amount;
   }
 
-  function lINKAvailable() pubilc view returns (uint256) {
+  function lINKAvailable() public view returns (uint256) {
     return withdrawableLINK.sub(committedLINK);
   }
 
@@ -40,7 +40,7 @@ contract Bountibot is Ownable {
       users.push(_githubUser);
     }
     require(lINKAvailable() >= payoutAmount);
-    committedlink = committedLINK.add(payoutAmount);
+    committedLINK = committedLINK.add(payoutAmount);
     userBalances[_githubUser] = userBalances[_githubUser].add(payoutAmount);
   }
 
@@ -50,7 +50,7 @@ contract Bountibot is Ownable {
     uint256 balance = userBalances[_githubUser];
     userBalances[_githubUser] = 0;
     committedLINK = committedLINK.sub(balance);
-    withdrawableLINK = withdrawableLINK(balance);
+    withdrawableLINK = withdrawableLINK.sub(balance);
     LINK.transfer(_to, balance);
   }
 

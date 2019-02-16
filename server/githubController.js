@@ -44,11 +44,14 @@ const createComment = async comment => {
         return
       }
 
+      // Create comment
       const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
       console.debug('posting GH comment', ghComment)
       octokit.issues
         .createComment(ghComment)
         .then(() => {
+
+          // Record that we commented
           collection
             .doc(key)
             .set(comment)

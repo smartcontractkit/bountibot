@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^16.15.0",
+    "bn.js": "^4.11.8",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "firebase": "^5.8.3",
@@ -19,8 +20,10 @@
     "isomorphic-unfetch": "^3.0.0",
     "next": "^8.0.1",
     "openzeppelin-solidity": "^1.12.0",
+    "prettier-eslint_d": "0.0.3",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
+    "request-promise": "^4.2.4",
     "truffle": "^5.0.4"
   },
   "devDependencies": {

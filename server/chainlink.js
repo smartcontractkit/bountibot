@@ -1,8 +1,8 @@
-const url = require('url')
-const BN =  require('BN')
+const BN = require('bn.js')
 const request = require('request-promise').defaults({ jar: true })
 
-const chainlinkCredentials = { // Used to authenticate to the chainlink API
+// Used to authenticate to the chainlink API
+const chainlinkCredentials = {
   email: 'alx@mit.edu',
   password: 'passme11'
 }
@@ -18,19 +18,20 @@ let authenticatedToChainlink = false
 const authenticateToChainlink = async () => {
   if (!authenticatedToChainlink) {
     await request.post(chainlinkAuthenticationURL, chainlinkCredentials)
+    authenticatedToChainlink = true
   }
 }
 
 const paymentJobSpec = {
-  'initiators': [{ 'type': 'web' }],
-  'tasks': [
+  initiators: [{ type: 'web' }],
+  tasks: [
     {
-      'type': 'ethtx',
-      'confirmations': 0,
-      'params': {
-        'address': LINKContractAddress, // This should be a chainlink contract.
-        'functionSelector': 'transfer(address,uint256)',
-        'format': 'bytes'
+      type: 'ethtx',
+      confirmations: 0,
+      params: {
+        address: LINKContractAddress,
+        functionSelector: 'transfer(address,uint256)',
+        format: 'bytes'
       }
     }
   ]
@@ -48,9 +49,18 @@ const setupChainlink = async () => {
   specifyPaymentJob()
 }
 
+const hexToBytes = hex => {
+  const rawHex = hex.startsWith('0x') ? hex.slice(2) : hex
+  const bytes = []
+  for (let c = 0; c < rawHex.length; c += 2) {
+    bytes.push(parseInt(hex.substr(c, 2), 16))
+  }
+  return bytes
+}
+
 // payLink(address, amount) requests that the chainlink node pay amount
 // LINK to address
-export const payLink = async (address, amount) => {
+const payLink = async (address, amount) => {
   await setupChainlink()
   const amountAsUint256 = BN(amount).toArray('be', 32)
   const createJobURL = `${jobSpecURL}/{paymentJob.data.id}/runs`
@@ -58,12 +68,4 @@ export const payLink = async (address, amount) => {
   await request.post(createJobURL, serializedFunctionArguments)
 }
 
-const hexToBytes = (hex) => {
-  if (hex.startsWith('0x')) {
-    hex = hex.slice(2)
-  }
-  for (var bytes = [], c = 0; c < hex.length; c += 2) {
-    bytes.push(parseInt(hex.substr(c, 2), 16))
-  }
-  return bytes
-}
+export { payLink as default }

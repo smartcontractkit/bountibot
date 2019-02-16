@@ -43,6 +43,15 @@ app.prepare().then(() => {
     res.json({ status: 'OK' })
   })
 
+  server.get('/jokes', async (_, res) => {
+    const snapshot = await storage.collection('dimitris_jokes').get()
+    const jokes = []
+    snapshot.forEach(j => {
+      jokes.push(j.data())
+    })
+    res.json({ jokes })
+  })
+
   // catch all sends to nextjs
   server
     .get('*', (req, res) => {

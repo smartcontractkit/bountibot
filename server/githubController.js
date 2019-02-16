@@ -39,7 +39,7 @@ const comments = {
     
 We are offering rewards of ${rewardAmount} for contributions to ${body.repository.name}.
 
-If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
+If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} LINK when this PR is accepted!
 
 ${l18nComment('commandsAndOptionsText')}`,
     thankyou: (body, address) =>
@@ -65,16 +65,16 @@ Finally, you can contact us by mentioning @${botName}.
     
 Nosotros ${rewardAmount} for contributions to ${body.repository.name}.
 
-If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
+If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} LINK when this PR is accepted!
 
 ${l18nComment('commandsAndOptionsText')}`
   },
   pirate: {
     noAddressComment: () => `Yaaaargh! I'm ${botName} ⛵️
     
-We are offering booty to the value of ${rewardAmount} LINK dubloons for contributions to this scurvy repository.
+We are offering booty to the value of ${rewardAmount} dubloons for contributions to this scurvy repository.
 
-If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
+If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} dubloons when this PR is accepted!
 
 ${l18nComment('commandsAndOptionsText')}`
   }

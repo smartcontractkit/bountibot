@@ -30,27 +30,31 @@ router.post('/gh_webhooks', (req, _res) => {
 })
 
 const createComment = async comment => {
-  const key = `${comment.full_repo_name}/${comment.owner}/${comment.number}`
+  const collection = storage
+    .collection('pull_request_comments')
 
-  const collection = storage.collection('pull_request_comments')
+  const key = `${comment.full_repo_name}/${comment.owner}.${comment.number}`
 
   // Check storage to see if we already commented
   collection
     .get(key)
     .then(doc => {
-      if (!doc.exists) {
-        const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
-        console.debug('posting GH comment', ghComment)
-        octokit.issues
-          .createComment(ghComment)
-          .then(() => {
-            collection
-              .doc(key)
-              .set(comment)
-              .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
-          })
-          .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
+      if (doc.exists) {
+        console.debug('Comment already exists on PR')
+        return
       }
+
+      const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
+      console.debug('posting GH comment', ghComment)
+      octokit.issues
+        .createComment(ghComment)
+        .then(() => {
+          collection
+            .doc(key)
+            .set(comment)
+            .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
+        })
+        .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
     })
     .catch(err => console.error(`Error obtaining existing PR comment from FB: ${err}`))
 }

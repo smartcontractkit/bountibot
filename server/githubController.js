@@ -12,7 +12,7 @@ const octokit = new Octokit({
 })
 
 const botName = 'bountibot'
-const lang = 'en'
+const lang = 'sp'
 
 router.post('/gh_webhooks', (req, _res) => {
   console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`)
@@ -63,9 +63,9 @@ Finally, you can contact us by mentioning @${botName}.
   sp: {
     noAddressComment: body => `Aloha! Yo soy ${botName} 🤖.
     
-Estamos ofreciendo ${rewardAmount} for contributions to ${body.repository.name}.
+Estamos ofreciendo ${rewardAmount} para contribuciones a ${body.repository.name}.
 
-If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} LINK when this PR is accepted!
+Si agrega una dirección de LINK a su descripción de Github Bio o PR, así: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. ¡Te enviaremos ${rewardAmount} LINK cuando se acepte este PR
 
 ${l18nComment('commandsAndOptionsText')}`
   },
@@ -83,7 +83,7 @@ ${l18nComment('commandsAndOptionsText')}`
 const l18nComment = (key, ...args) => {
   let comment = comments[lang][key]
   if (comment == null) {
-    console.debug(`No comment for language '${lang}' falling back to en`)
+    console.debug(`No comment for language '${lang}' falling back to en for '${key}'`)
     comment = comments.en[key]
   }
   return comment(...args)

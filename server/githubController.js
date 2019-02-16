@@ -10,13 +10,21 @@ const octokit = new Octokit({
 })
 
 router.post('/gh_webhooks', (req, _res) => {
-  console.log('got webhook action', req.body.action)
-  console.log('body', req.body)
+  console.debug('Got Github Webhook', 'action', req.body.action, 'repository', req.body.repository.name, 'owner', req.body.repository.owner.login)
 
-  if (req.body.action === 'opened') {
-    openedIssue(req.body)
-  } else if (req.body.action === 'edited') {
-    editedIssue(req.body)
+  switch (req.body.action) {
+    case 'opened':
+      openedIssue(req.body)
+      break
+    case 'closed':
+      closedIssue(req.body)
+      break
+    case 'edited':
+      editedIssue(req.body)
+      break
+    default:
+      console.log('got webhook action', req.body.action)
+      break
   }
 })
 
@@ -44,8 +52,18 @@ const createRewardableComment = async (body, address) => {
     .catch(console.error)
 }
 
+const postReward = async body => {
+  console.log('posting reward', body.pull_request.number)
+
+  // TODO: determine if it was actually approved and merged
+  const match = (body.pull_request.body || '').match(addressRegex)
+  if (match) {
+    reward(match[1], rewardAmount)
+  }
+}
+
 const openedIssue = async body => {
-  console.log('posting comment on issue', body.pull_request.number)
+  console.log('posting comment on opened issue', body.pull_request.number)
 
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
@@ -55,7 +73,20 @@ const openedIssue = async body => {
   }
 }
 
+const closedIssue = async body => {
+  console.log('posting comment on closed issue', body.pull_request.number)
+
+  const match = (body.pull_request.body || '').match(addressRegex)
+  if (match) {
+    postReward(body, match[1])
+  } else {
+    createNoAddressComment(body)
+  }
+}
+
 const editedIssue = async body => {
+  console.log('issue edited, seeing if a bounty address was added...', body.pull_request.number)
+
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
     createRewardableComment(body, match[1])

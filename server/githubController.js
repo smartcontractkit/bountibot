@@ -11,6 +11,8 @@ const octokit = new Octokit({
   auth: `token ${process.env.GITHUB_KEY}`
 })
 
+const botName = 'bountibot'
+
 router.post('/gh_webhooks', (req, _res) => {
   console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`)
 
@@ -50,7 +52,6 @@ const createComment = async comment => {
       octokit.issues
         .createComment(ghComment)
         .then(() => {
-
           // Record that we commented
           collection
             .doc(key)
@@ -70,9 +71,25 @@ const createNoAddressComment = async body => {
     number: body.pull_request.number,
     body: `Yaaaargh, I see you've made a PR on ${
       body.repository.name
-    }. We are offering rewards of ${rewardAmount} LINK to all PRs that get merged to this repository. To claim your LINK, place an EIP155 Address in your PR's description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3].`
+    }. We are offering rewards of ${rewardAmount} LINK to all PRs that get merged to this repository. To claim your LINK, place an EIP155 Address in your PR's description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. ${commandsAndOptionsText()}`
   }
   createComment(comment)
+}
+
+const commandsAndOptionsText = () => {
+  return `---
+
+<details>
+<summary>${botName} commands and options</summary>
+<br />
+
+You can trigger ${botName} actions by commenting on this PR:
+- \`@${botName} update\` look for the bounty address again
+- \`@${botName} 🏴‍☠️\` respond to further actions in pirate mode
+
+Finally, you can contact us by mentioning @${botName}.
+
+</details>`
 }
 
 const createRewardableComment = async (body, address) => {
@@ -81,7 +98,7 @@ const createRewardableComment = async (body, address) => {
     repo: body.repository.name,
     full_repo_name: body.repository.full_name,
     number: body.pull_request.number,
-    body: `Thanks for adding your Ethereum address ${body.repository.owner.login}! When this PR is approved and merged we will be sending ${rewardAmount} to ${address}.`
+    body: `Thanks for adding your Ethereum address ${body.repository.owner.login}! When this PR is approved and merged we will be sending ${rewardAmount} to ${address}. ${commandsAndOptionsText()}`
   }
   createComment(comment)
 }

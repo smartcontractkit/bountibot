@@ -4,6 +4,7 @@
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
+const fb = require('./server/firebase')
 
 const dev = process.env.NODE_ENV !== 'production'
 const port = process.env.PORT || 3000

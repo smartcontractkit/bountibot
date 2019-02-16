@@ -63,7 +63,7 @@ Finally, you can contact us by mentioning @${botName}.
   sp: {
     noAddressComment: body => `Aloha! Yo soy ${botName} 🤖.
     
-Nosotros ${rewardAmount} for contributions to ${body.repository.name}.
+Estamos ofreciendo ${rewardAmount} for contributions to ${body.repository.name}.
 
 If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} LINK when this PR is accepted!
 

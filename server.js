@@ -4,7 +4,7 @@ const next = require('next')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const FileStore = require('session-file-store')(session)
-const { config } = require('./server/firebase')
+const { storage, config } = require('./server/firebase')
 const githubController = require('./server/githubController')
 const loginController = require('./server/loginController')
 
@@ -34,6 +34,16 @@ app.prepare().then(() => {
 
   server.get('/config', (req, res) => {
     res.json(config)
+  })
+
+  server.get('/testing_firebase', async (_, res) => {
+    await storage
+      .collection('dimitris_jokes')
+      .doc('anotherJoke')
+      .set({
+        message: 'serenity is the greatest sci fi movie ever, dont @ me'
+      })
+    res.json({ status: 'OK' })
   })
 
   // catch all sends to nextjs

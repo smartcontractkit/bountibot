@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { seed } from '../components/seed'
+import fetch from 'isomorphic-unfetch'
+import { initialPropsBaseUrl as baseUrl, seed } from '../components/seed'
 import { FirebaseContext } from '../components/FirebaseContext'
 import 'firebase/firestore'
 
-const Home = () => {
+const Home = ({ seedJokes }) => {
   const firebase = useContext(FirebaseContext)
-  const [jokes, setJokes] = useState([])
+  const [jokes, setJokes] = useState(seedJokes)
 
   useEffect(() => {
     firebase
@@ -30,6 +31,13 @@ const Home = () => {
       </ul>
     </React.Fragment>
   )
+}
+
+Home.getInitialProps = async ({ req }) => {
+  // have to hit server endpoint when SSRing
+  const res = await fetch(baseUrl(req) + `/jokes`)
+  const resJSON = await res.json()
+  return { seedJokes: resJSON.jokes }
 }
 
 export default seed(Home)

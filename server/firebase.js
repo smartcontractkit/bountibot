@@ -1,5 +1,6 @@
 const admin = require('firebase-admin')
 const fs = require('fs')
+const path = require('path')
 
 const config = {
   apiKey: process.env.BB_API_KEY,
@@ -10,7 +11,10 @@ const config = {
   messagingSenderId: process.env.BB_MESSAGING_SENDER_ID
 }
 
-const serviceAccountJSONPath = './bountibot-development-2a0f154f120e'
+const serviceAccountJSONPath = path.resolve(
+  __dirname,
+  'bountibot-development-2a0f154f120e.json'
+)
 if (fs.existsSync(serviceAccountJSONPath)) {
   const serviceAccount = require(serviceAccountJSONPath)
   config.credential = admin.credential.cert(serviceAccount)

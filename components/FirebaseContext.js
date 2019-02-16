@@ -3,11 +3,12 @@ import { createContext } from 'react'
 
 export const FirebaseContext = createContext(null)
 
-const windowDefined = typeof window !== 'undefined'
+export const windowDefined = typeof window !== 'undefined'
 
 let singleton
 export const clientSideFirebase = config => {
   if (!singleton && windowDefined) {
+    console.log('-------- initializing firebase app for client')
     singleton = firebase.initializeApp(config)
   }
   return singleton

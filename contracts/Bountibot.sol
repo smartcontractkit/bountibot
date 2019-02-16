@@ -63,6 +63,4 @@ contract Bountibot is Ownable {
     require(msg.sender == githubServer);
     _;
   }
-
 }
-

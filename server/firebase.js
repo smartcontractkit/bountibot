@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+require('firebase/firestore')
 
 const config = {
   apiKey: process.env.BB_API_KEY,
@@ -11,7 +12,9 @@ const config = {
 
 // this should only be included once...
 // do note that admin apps bypass all security rules.
+const firebase = admin.initializeApp(config)
 module.exports = {
-  firebase: admin.initializeApp(config),
+  firebase,
+  storage: firebase.firestore(),
   config
 }

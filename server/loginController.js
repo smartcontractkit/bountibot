@@ -35,8 +35,11 @@ router.post('/api/login', (req, res) => {
 })
 
 router.post('/api/logout', (req, res) => {
-  req.session.decodedToken = null
-  req.session.admin = null
+  console.log('logging out and destroying session')
+  if (req.session.user) {
+    // hack to get around multiple logouts destroying empty sessions
+    req.session.destroy()
+  }
   res.json({ status: true })
 })
 

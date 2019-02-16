@@ -5,53 +5,57 @@ import { clientSideFirebase, FirebaseContext } from './FirebaseContext'
 import GithubLogin from './GithubLogin'
 import UserContext from './UserContext'
 
-const initialPropsBaseUrl = req => {
+export const initialPropsBaseUrl = req => {
   return req ? `${req.protocol}://${req.get('Host')}` : ''
+}
+
+export const getSessionUser = req => {
+  return req && req.session ? req.session.user : null
 }
 
 const getInitialConfig = async ({ req }) => {
   const url = initialPropsBaseUrl(req) + `/config`
   const res = await fetch(url)
-  const user = req && req.session ? req.session.user : null
-  return { config: await res.json(), initialUser: user }
+  return { config: await res.json(), user: getSessionUser(req) }
 }
 
 // https://github.com/zeit/next.js/blob/canary/examples/with-firebase-authentication/pages/index.js
-const postAuthChange = user => {
-  if (user) {
-    return user.getIdToken().then(token => {
+const postLogin = async user => {
+  return user.getIdToken().then(token => {
+    // eslint-disable-next-line no-undef
+    return fetch('/api/login', {
+      method: 'POST',
       // eslint-disable-next-line no-undef
-      return fetch('/api/login', {
-        method: 'POST',
-        // eslint-disable-next-line no-undef
-        headers: new Headers({ 'Content-Type': 'application/json' }),
-        credentials: 'same-origin',
-        body: JSON.stringify({ token })
-      })
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+      credentials: 'same-origin',
+      body: JSON.stringify({ token })
     })
-  }
+  })
+}
+
+const postLogout = async () => {
   // eslint-disable-next-line no-undef
-  fetch('/api/logout', {
+  return fetch('/api/logout', {
     method: 'POST',
     credentials: 'same-origin'
   })
-  return null
 }
 
-const seed = WrappedComponent => {
-  const rval = ({ config, initialUser, ...props }) => {
-    const [user, setUser] = useState(initialUser)
+export const seed = WrappedComponent => {
+  const rval = ({ config, user, ...props }) => {
+    const [currentUser, setCurrentUser] = useState(user)
 
     useEffect(() => {
       const fbapp = clientSideFirebase(config)
       if (fbapp) {
         fbapp.auth().onAuthStateChanged(async userParam => {
           if (userParam) {
-            const resp = await postAuthChange(userParam)
+            const resp = await postLogin(userParam)
             const respjs = await resp.json()
-            setUser(respjs.user)
+            setCurrentUser(respjs.user)
           } else {
-            setUser(null)
+            await postLogout()
+            setCurrentUser(null)
           }
         })
       }
@@ -59,15 +63,22 @@ const seed = WrappedComponent => {
 
     return (
       <FirebaseContext.Provider value={clientSideFirebase(config)}>
-        <UserContext.Provider value={user}>
+        <UserContext.Provider value={currentUser}>
           <GithubLogin />
-          <WrappedComponent {...props} user={user} />
+          <WrappedComponent {...props} user={currentUser} />
         </UserContext.Provider>
       </FirebaseContext.Provider>
     )
   }
 
-  rval.getInitialProps = getInitialConfig
+  rval.getInitialProps = async ctx => {
+    const initialProps = await getInitialConfig(ctx)
+    let wrappedProps = {}
+    if (WrappedComponent.getInitialProps) {
+      wrappedProps = await WrappedComponent.getInitialProps(ctx)
+    }
+    return { ...initialProps, ...wrappedProps }
+  }
   return rval
 }
 

@@ -11,6 +11,8 @@
     "node": "10.x.x"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^1.0.1",
+    "@google-cloud/storage": "^2.4.2",
     "@material-ui/core": "^4.0.0-alpha.0",
     "@octokit/rest": "^16.15.0",
     "body-parser": "^1.18.3",
@@ -22,6 +24,7 @@
     "i18next": "^15.0.4",
     "isomorphic-unfetch": "^3.0.0",
     "jss": "^9.8.7",
+    "lodash": "^4.17.11",
     "next": "^8.0.1",
     "next-auth": "^1.12.1",
     "openzeppelin-solidity": "^1.12.0",

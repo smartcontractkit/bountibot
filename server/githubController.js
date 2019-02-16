@@ -3,10 +3,10 @@ const express = require('express')
 const _ = require('lodash')
 const { storage } = require('./firebase')
 const { l18nComment } = require('./comments')
+const { rewardAmount } = require('./constants')
 
 const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
-const rewardAmount = 100
 
 const octokit = new Octokit({
   auth: `token ${process.env.GITHUB_KEY}`
@@ -34,26 +34,30 @@ const createComment = async comment => {
   const collection = storage.collection('pull_request_comments')
 
   const key = `${comment.full_repo_name}/${comment.owner}.${comment.number}`
+  console.debug(`Looking for key ${key}`)
+
+  const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
+  console.debug('posting GH comment', ghComment)
 
   // Check storage to see if we already commented
   collection
-    .get(key)
+    .doc(key)
+    .get()
     .then(doc => {
       if (doc.exists) {
-        console.debug('Comment already exists on PR')
+        console.debug('Comment already exists on PR', doc.data())
+        octokit.issues.updateComment(_.assign({}, ghComment, { comment_id: doc.data().comment_id }))
         return
       }
 
       // Create comment
-      const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
-      console.debug('posting GH comment', ghComment)
       octokit.issues
         .createComment(ghComment)
-        .then(() => {
+        .then(response => {
           // Record that we commented
           collection
             .doc(key)
-            .set(comment)
+            .set(_.assign({}, ghComment, { comment_id: response.data.id }))
             .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
         })
         .catch(err => console.error(`Error creating PR comment from GH: ${err}`))

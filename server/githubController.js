@@ -1,5 +1,6 @@
 const Octokit = require('@octokit/rest')
 const express = require('express')
+const { firebase } = require('./firebase')
 
 const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
@@ -10,7 +11,7 @@ const octokit = new Octokit({
 })
 
 router.post('/gh_webhooks', (req, _res) => {
-  console.debug(`Got Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.name}, owner: ${req.body.repository.owner.login}.`)
+  console.debug(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.name}, owner: ${req.body.repository.owner.login}.`)
 
   switch (req.body.action) {
     case 'opened':
@@ -42,12 +43,27 @@ const createNoAddressComment = async body => {
 }
 
 const createRewardableComment = async (body, address) => {
-  const result = await octokit.issues
-    .createComment({
-      owner: body.repository.owner.login,
-      repo: body.repository.name,
-      number: body.pull_request.number,
-      body: `${rewardAmount} LINK has been rewarded to ${address}`
+  // bountibot/j16r/1
+  const key = `${body.repository.full_name}/${body.repository.owner.login}/${body.pull_request.number}`
+
+  const collection = firebase.collection('pull_request_comments')
+  // Check firebase to see if we already commented
+  collection
+    .get(key)
+    .then(doc => {
+      if (!doc.exists) {
+        const comment = {
+          owner: body.repository.owner.login,
+          repo: body.repository.name,
+          number: body.pull_request.number,
+          body: `${rewardAmount} LINK has been rewarded to ${address}`
+        }
+
+        octokit.issues
+          .createComment(comment)
+          .then(() => collection.doc(key).set(comment))
+          .catch(console.error)
+      }
     })
     .catch(console.error)
 }

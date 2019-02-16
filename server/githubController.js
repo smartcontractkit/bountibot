@@ -34,16 +34,18 @@ router.post('/gh_webhooks', (req, _res) => {
 
 const comments = {
   en: {
-    noAddressComment: body => `Greetings, my name is ${botName} 🤖.
+    noAddressComment: body =>
+      `Greetings, my name is ${botName} 🤖.
     
 We are offering rewards of ${rewardAmount} for contributions to ${body.repository.name}.
 
 If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
 
 ${l18nComment('commandsAndOptionsText')}`,
-    thankyou: (body, address) => `Thanks for adding your Ethereum address ${body.repository.owner.login}! When this PR is approved and merged we will be sending ${rewardAmount} to ${address}.
-   
-${l18nComment('commandsAndOptionsText')}`,
+    thankyou: (body, address) =>
+      `Thanks for adding your Ethereum address ${
+        body.repository.owner.login
+      }! When this PR is approved and merged we will be sending ${rewardAmount} LINK to ${address}.`,
     commandsAndOptionsText: () => `---
 
 <details>

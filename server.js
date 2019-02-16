@@ -5,6 +5,7 @@ const express = require('express')
 const { parse } = require('url')
 const next = require('next')
 const bodyParser = require('body-parser')
+const Octokit = require('@octokit/rest')
 const fb = require('./server/firebase')
 
 const dev = process.env.NODE_ENV !== 'production'
@@ -14,11 +15,25 @@ const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
   const server = express()
+  const octokit = new Octokit({
+    auth: `token ${process.env.GITHUB_KEY}`
+  })
 
   server.use(bodyParser.json())
 
-  server.post('/gh_webhooks', req => {
-    console.log('got webook', req.body)
+  server.post('/gh_webhooks', async (req, _res) => {
+    console.log('got webhook action', req.body.action)
+    if (req.body.action !== 'opened') {
+      return
+    }
+
+    console.log('posting comment on issue', req.body.pull_request.number)
+    const result = await octokit.issues.createComment({
+      owner: req.body.repository.owner.login,
+      repo: req.body.repository.name,
+      number: req.body.pull_request.number,
+      body: `Yaaaargh, I see you've made a PR on ${req.body.repository.name}. We are offering rewards of 100 LINK to all PRs that get merged to this repository. To claim your LINK, place an EIP155 Address in your PR's description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3].`
+    })
   })
 
   server

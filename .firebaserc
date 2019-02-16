@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "bountibot-development",
+    "development": "bountibot-development",
+    "staging": "bountibot-staging"
+  }
+}

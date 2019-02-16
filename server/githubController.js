@@ -12,6 +12,7 @@ const octokit = new Octokit({
 })
 
 const botName = 'bountibot'
+const lang = 'en'
 
 router.post('/gh_webhooks', (req, _res) => {
   console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`)
@@ -31,9 +32,63 @@ router.post('/gh_webhooks', (req, _res) => {
   }
 })
 
+const comments = {
+  en: {
+    noAddressComment: body => `Greetings, my name is ${botName} 🤖.
+    
+We are offering rewards of ${rewardAmount} for contributions to ${body.repository.name}.
+
+If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
+
+${l18nComment('commandsAndOptionsText')}`,
+    thankyou: (body, address) => `Thanks for adding your Ethereum address ${body.repository.owner.login}! When this PR is approved and merged we will be sending ${rewardAmount} to ${address}.
+   
+${l18nComment('commandsAndOptionsText')}`,
+    commandsAndOptionsText: () => `---
+
+<details>
+<summary>${botName} commands and options</summary>
+<br />
+
+You can trigger ${botName} actions by commenting on this PR:
+- \`@${botName} update\` look for the bounty address again
+- \`@${botName} 🏴‍☠️\` respond to further actions in pirate mode
+
+Finally, you can contact us by mentioning @${botName}.
+
+</details>`
+  },
+  sp: {
+    noAddressComment: body => `Aloha! Yo soy ${botName} 🤖.
+    
+Nosotros ${rewardAmount} for contributions to ${body.repository.name}.
+
+If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
+
+${l18nComment('commandsAndOptionsText')}`
+  },
+  pirate: {
+    noAddressComment: () => `Yaaaargh! I'm ${botName} ⛵️
+    
+We are offering booty to the value of ${rewardAmount} LINK dubloons for contributions to this scurvy repository.
+
+If you add a LINK address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} when this PR is accepted!
+
+${l18nComment('commandsAndOptionsText')}`
+  }
+}
+
+const l18nComment = (key, ...args) => {
+  let comment = comments[lang][key]
+  if (comment == null) {
+    console.debug(`No comment for language '${lang}' falling back to en`)
+    comment = comments.en[key]
+  }
+  return comment(...args)
+}
+
 const createComment = async comment => {
-  const collection = storage
-    .collection('pull_request_comments')
+  const collection = storage.collection('pull_request_comments')
 
   const key = `${comment.full_repo_name}/${comment.owner}.${comment.number}`
 
@@ -69,27 +124,9 @@ const createNoAddressComment = async body => {
     repo: body.repository.name,
     full_repo_name: body.repository.full_name,
     number: body.pull_request.number,
-    body: `Yaaaargh, I see you've made a PR on ${
-      body.repository.name
-    }. We are offering rewards of ${rewardAmount} LINK to all PRs that get merged to this repository. To claim your LINK, place an EIP155 Address in your PR's description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. ${commandsAndOptionsText()}`
+    body: l18nComment('noAddressComment', body)
   }
   createComment(comment)
-}
-
-const commandsAndOptionsText = () => {
-  return `---
-
-<details>
-<summary>${botName} commands and options</summary>
-<br />
-
-You can trigger ${botName} actions by commenting on this PR:
-- \`@${botName} update\` look for the bounty address again
-- \`@${botName} 🏴‍☠️\` respond to further actions in pirate mode
-
-Finally, you can contact us by mentioning @${botName}.
-
-</details>`
 }
 
 const createRewardableComment = async (body, address) => {
@@ -98,7 +135,7 @@ const createRewardableComment = async (body, address) => {
     repo: body.repository.name,
     full_repo_name: body.repository.full_name,
     number: body.pull_request.number,
-    body: `Thanks for adding your Ethereum address ${body.repository.owner.login}! When this PR is approved and merged we will be sending ${rewardAmount} to ${address}. ${commandsAndOptionsText()}`
+    body: l18nComment('thankyou', body, address)
   }
   createComment(comment)
 }

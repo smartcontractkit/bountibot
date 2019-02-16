@@ -36,7 +36,7 @@ const createRewardableComment = async (octokit, body, address) => {
 const openedIssue = async (octokit, body) => {
   console.log('posting comment on issue', body.pull_request.number)
 
-  const match = body.pull_request.body.match(addressRegex)
+  const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
     createRewardableComment(octokit, body, match[1])
   } else {
@@ -45,7 +45,7 @@ const openedIssue = async (octokit, body) => {
 }
 
 const editedIssue = async (octokit, body) => {
-  const match = body.pull_request.body.match(addressRegex)
+  const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
     createRewardableComment(octokit, body, match[1])
   }

@@ -11,6 +11,7 @@
     "node": "10.x.x"
   },
   "dependencies": {
+    "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "firebase": "^5.8.3",
     "firebase-admin": "^7.0.0",

@@ -12,7 +12,7 @@ const octokit = new Octokit({
 })
 
 router.post('/gh_webhooks', (req, _res) => {
-  console.debug(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`)
+  console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`)
 
   switch (req.body.action) {
     case 'opened':
@@ -25,7 +25,6 @@ router.post('/gh_webhooks', (req, _res) => {
       editedIssue(req.body)
       break
     default:
-      console.debug('got webhook action', req.body.action)
       break
   }
 })
@@ -75,7 +74,7 @@ const createRewardableComment = async (body, address) => {
     repo: body.repository.name,
     full_repo_name: body.repository.full_name,
     number: body.pull_request.number,
-    body: `${rewardAmount} LINK has been rewarded to ${address}`
+    body: `Thanks for adding your Ethereum address ${body.repository.owner.login}! When this PR is approved and merged we will be sending ${rewardAmount} to ${address}.`
   }
   createComment(comment)
 }

@@ -10,7 +10,7 @@ const octokit = new Octokit({
 })
 
 router.post('/gh_webhooks', (req, _res) => {
-  console.debug('Got Github Webhook', 'action', req.body.action, 'repository', req.body.repository.name, 'owner', req.body.repository.owner.login)
+  console.debug(`Got Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.name}, owner: ${req.body.repository.owner.login}.`)
 
   switch (req.body.action) {
     case 'opened':

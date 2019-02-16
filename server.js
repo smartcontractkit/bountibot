@@ -12,12 +12,14 @@ const handle = app.getRequestHandler()
 
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
 
+const rewardAmount = 100
+
 const createNoAddressComment = async (octokit, body) => {
   const result = await octokit.issues.createComment({
     owner: body.repository.owner.login,
     repo: body.repository.name,
     number: body.pull_request.number,
-    body: `Yaaaargh, I see you've made a PR on ${body.repository.name}. We are offering rewards of 100 LINK to all PRs that get merged to this repository. To claim your LINK, place an EIP155 Address in your PR's description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3].`
+    body: `Yaaaargh, I see you've made a PR on ${body.repository.name}. We are offering rewards of ${rewardAmount} LINK to all PRs that get merged to this repository. To claim your LINK, place an EIP155 Address in your PR's description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3].`
   }).catch(console.error)
 }
 
@@ -26,7 +28,7 @@ const createRewardableComment = async (octokit, body, address) => {
     owner: body.repository.owner.login,
     repo: body.repository.name,
     number: body.pull_request.number,
-    body: `100 LINK has been rewarded to ${address}`
+    body: `${rewardAmount} LINK has been rewarded to ${address}`
   }).catch(console.error)
 }
 

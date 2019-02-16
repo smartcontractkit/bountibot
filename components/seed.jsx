@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import fetch from 'isomorphic-unfetch'
 import 'firebase/auth'
 import { clientSideFirebase, FirebaseContext } from './FirebaseContext'
+import GithubLogin from './GithubLogin'
 import UserContext from './UserContext'
 
 const initialPropsBaseUrl = req => {
@@ -30,6 +31,7 @@ const seed = WrappedComponent => {
     return (
       <FirebaseContext.Provider value={clientSideFirebase(config)}>
         <UserContext.Provider value={user}>
+          <GithubLogin />
           <WrappedComponent {...props} user={user} />
         </UserContext.Provider>
       </FirebaseContext.Provider>

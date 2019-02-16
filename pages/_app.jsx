@@ -2,8 +2,10 @@ import React from 'react';
 import App, { Container } from 'next/app';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import Header from '../components/Header'
 import JssProvider from 'react-jss/lib/JssProvider';
 import getPageContext from '../src/getPageContext';
+import getInitialConfig from '../src/getInitialConfig'
 
 class MyApp extends App {
   constructor(props) {
@@ -23,6 +25,8 @@ class MyApp extends App {
 
   render() {
     const { Component, pageProps } = this.props;
+    const { user } = pageProps
+
     return (
       <Container>
         {/* Wrap every page in Jss and Theme providers */}
@@ -40,11 +44,31 @@ class MyApp extends App {
             <CssBaseline />
             {/* Pass pageContext to the _document though the renderPage enhancer
                 to render collected styles on server side. */}
-            <Component pageContext={this.pageContext} {...pageProps} />
+            <React.Fragment>
+              <Header user={user} />
+              <Component pageContext={this.pageContext} {...pageProps} />
+            </React.Fragment>
           </MuiThemeProvider>
         </JssProvider>
       </Container>
     );
+  }
+}
+
+MyApp.getInitialProps = async ({ Component, router, ctx }) => {
+  let pageProps = {}
+
+  const initialConfig = await getInitialConfig(ctx)
+
+  if (Component.getInitialProps) {
+    pageProps = await Component.getInitialProps(ctx)
+  }
+
+  return {
+    pageProps: {
+      ...pageProps,
+      ...initialConfig
+    }
   }
 }
 

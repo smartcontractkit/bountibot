@@ -13,7 +13,7 @@ export const getSessionUser = req => {
   return req && req.session ? req.session.user : null
 }
 
-const getInitialConfig = async ({ req }) => {
+export const getInitialConfig = async ({ req }) => {
   const url = initialPropsBaseUrl(req) + `/config`
   const res = await fetch(url)
   return { config: await res.json(), user: getSessionUser(req) }

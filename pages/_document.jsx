@@ -1,11 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Document, { Head, Main, NextScript } from 'next/document'
-import AppBar from '@material-ui/core/AppBar'
-import Toolbar from '@material-ui/core/Toolbar'
-import Link from '@material-ui/core/Link'
 import flush from 'styled-jsx/server'
-// import './i18n'
 
 class MyDocument extends Document {
   render() {
@@ -14,7 +10,7 @@ class MyDocument extends Document {
     return (
       <html lang="en" dir="ltr">
         <Head>
-          <title>My page</title>
+          <title>Bountibot</title>
           <meta charSet="utf-8" />
           {/* Use minimum-scale=1 to enable GPU rasterization */}
           <meta
@@ -25,12 +21,6 @@ class MyDocument extends Document {
           <meta name="theme-color" content={pageContext.theme.palette.primary.main} />
         </Head>
         <body>
-          <AppBar position="static">
-            <Toolbar>
-              <Link href="/">Home</Link> | <Link href="/admin/prs">PRs</Link>
-            </Toolbar>
-          </AppBar>
-
           <Main />
           <NextScript />
         </body>
@@ -39,7 +29,7 @@ class MyDocument extends Document {
   }
 }
 
-MyDocument.getInitialProps = ctx => {
+MyDocument.getInitialProps = async ctx => {
   // Resolution order
   //
   // On the server:
@@ -81,6 +71,7 @@ MyDocument.getInitialProps = ctx => {
 
   return {
     ...page,
+    // ...initialConfig,
     pageContext,
     // Styles fragment is rendered after the app and page rendering finish.
     styles: (

@@ -13,9 +13,9 @@ const port = process.env.PORT || 3000
 const app = next({ dev })
 const handle = app.getRequestHandler()
 
-const openedIssue = async (octokit, body) => {
-  console.log('posting comment on issue', body.pull_request.number)
+const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
 
+const createNoAddressComment = async (octokit, body) => {
   const result = await octokit.issues.createComment({
     owner: body.repository.owner.login,
     repo: body.repository.name,
@@ -24,7 +24,31 @@ const openedIssue = async (octokit, body) => {
   }).catch(console.error)
 }
 
-const commentedIssue = async (octokit, body) => {
+const createRewardableComment = async (octokit, body, address) => {
+  const result = await octokit.issues.createComment({
+    owner: body.repository.owner.login,
+    repo: body.repository.name,
+    number: body.pull_request.number,
+    body: `100 LINK has been rewarded to ${address}`
+  }).catch(console.error)
+}
+
+const openedIssue = async (octokit, body) => {
+  console.log('posting comment on issue', body.pull_request.number)
+
+  const match = body.pull_request.body.match(addressRegex)
+  if (match) {
+    createRewardableComment(octokit, body, match[1])
+  } else {
+    createNoAddressComment(octokit, body)
+  }
+}
+
+const editedIssue = async (octokit, body) => {
+  const match = body.pull_request.body.match(addressRegex)
+  if (match) {
+    createRewardableComment(octokit, body, match[1])
+  }
 }
 
 app.prepare().then(() => {
@@ -41,8 +65,8 @@ app.prepare().then(() => {
 
     if (req.body.action === 'opened') {
       openedIssue(octokit, req.body)
-    } else if (req.body.action === 'commented') {
-      commentedIssue(octokit, req.body)
+    } else if (req.body.action === 'edited') {
+      editedIssue(octokit, req.body)
     }
   })
 

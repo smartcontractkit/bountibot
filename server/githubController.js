@@ -39,7 +39,7 @@ const createComment = async comment => {
   collection
     .get(key)
     .then(doc => {
-      if (!doc.exists) {
+      if (doc.exists) {
         console.debug('Comment already exists on PR')
         return
       }

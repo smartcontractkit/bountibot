@@ -8,7 +8,7 @@ const GithubLogin = () => {
   const fbapp = useContext(FirebaseContext)
   const user = useContext(UserContext)
 
-  const signin = async () => {
+  const login = async () => {
     const provider = new firebase.auth.GithubAuthProvider()
 
     fbapp
@@ -19,12 +19,24 @@ const GithubLogin = () => {
       })
   }
 
+  const logout = () => {
+    firebase.auth().signOut()
+  }
+
   if (user) {
-    return <span>Welcome {user.displayName}</span>
+    return (
+      <React.Fragment>
+        <span>Welcome {user.displayName}</span>
+        {user.admin && <span>!admin!</span>}
+        <button type="button" onClick={logout}>
+          Logout
+        </button>
+      </React.Fragment>
+    )
   }
   return (
     <Fragment>
-      <button type="button" onClick={signin}>
+      <button type="button" onClick={login}>
         Sign In w GitHub
       </button>
       <style jsx>

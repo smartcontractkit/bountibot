@@ -12,18 +12,47 @@ const initialPropsBaseUrl = req => {
 const getInitialConfig = async ({ req }) => {
   const url = initialPropsBaseUrl(req) + `/config`
   const res = await fetch(url)
-  return { config: await res.json() }
+  const user = req && req.session ? req.session.user : null
+  return { config: await res.json(), initialUser: user }
+}
+
+// https://github.com/zeit/next.js/blob/canary/examples/with-firebase-authentication/pages/index.js
+const postAuthChange = user => {
+  if (user) {
+    return user.getIdToken().then(token => {
+      // eslint-disable-next-line no-undef
+      return fetch('/api/login', {
+        method: 'POST',
+        // eslint-disable-next-line no-undef
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        credentials: 'same-origin',
+        body: JSON.stringify({ token })
+      })
+    })
+  }
+  // eslint-disable-next-line no-undef
+  fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'same-origin'
+  })
+  return null
 }
 
 const seed = WrappedComponent => {
-  const rval = ({ config, ...props }) => {
-    const [user, setUser] = useState(null)
+  const rval = ({ config, initialUser, ...props }) => {
+    const [user, setUser] = useState(initialUser)
 
     useEffect(() => {
-      const fbapp = clientSideFirebase()
+      const fbapp = clientSideFirebase(config)
       if (fbapp) {
-        fbapp.auth().onAuthStateChanged(userParam => {
-          setUser(userParam)
+        fbapp.auth().onAuthStateChanged(async userParam => {
+          if (userParam) {
+            const resp = await postAuthChange(userParam)
+            const respjs = await resp.json()
+            setUser(respjs.user)
+          } else {
+            setUser(null)
+          }
         })
       }
     }, [])

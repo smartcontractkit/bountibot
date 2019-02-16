@@ -6,6 +6,7 @@ const { parse } = require('url')
 const next = require('next')
 const bodyParser = require('body-parser')
 const fb = require('./server/firebase')
+const Octokit = require('@octokit/rest')
 
 const dev = process.env.NODE_ENV !== 'production'
 const port = process.env.PORT || 3000
@@ -14,11 +15,21 @@ const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
   const server = express()
+  const octokit = new Octokit({
+    auth: process.env.GITHUB_KEY
+  })
 
   server.use(bodyParser.json())
 
-  server.post('/gh_webhooks', req => {
-    console.log('got webook', req.body)
+  server.post('/gh_webhooks', async (req, _res) => {
+    console.log('got webhook', req.body)
+    const result = await octokit.pulls.createComment({
+      owner: req.body.repository.owner.login,
+      repository: req.body.repository.name,
+      number: 1,
+      body: "Yaaaargh, I see you've made a PR on #{bountibot}"
+    })
+    console.log('result', result)
   })
 
   server

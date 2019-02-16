@@ -1,6 +1,6 @@
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
-import { useContext, React } from 'react'
+import React, { Fragment, useContext } from 'react'
 import { FirebaseContext } from './FirebaseContext'
 import UserContext from './UserContext'
 
@@ -22,7 +22,27 @@ const GithubLogin = () => {
   if (user) {
     return <span>Welcome {user.displayName}</span>
   }
-  return <a onClick={signin}>Sign In w GitHub</a>
+  return (
+    <Fragment>
+      <button type="button" onClick={signin}>
+        Sign In w GitHub
+      </button>
+      <style jsx>
+        {`
+          a {
+            font-family: 'Arial';
+            text-decoration: none;
+            color: blue;
+            cursor: pointer;
+          }
+
+          a:hover {
+            opacity: 0.6;
+          }
+        `}
+      </style>
+    </Fragment>
+  )
 }
 
 export default GithubLogin

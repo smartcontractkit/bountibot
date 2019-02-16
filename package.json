@@ -5,6 +5,7 @@
     "dev": "nodemon server.js",
     "build": "next build",
     "start": "NODE_ENV=production node server.js",
+    "deploy": "gcloud app deploy app.staging.yaml --project=bountibot-staging",
     "gcp-build": "npm run build"
   },
   "engines": {

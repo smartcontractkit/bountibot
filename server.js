@@ -37,12 +37,9 @@ app.prepare().then(() => {
   })
 
   server.get('/testing_firebase', async (_, res) => {
-    await storage
-      .collection('dimitris_jokes')
-      .doc('anotherJoke')
-      .set({
-        message: 'serenity is the greatest sci fi movie ever, dont @ me'
-      })
+    await storage.collection('dimitris_jokes').add({
+      message: 'serenity is the greatest sci fi movie ever, dont @ me'
+    })
     res.json({ status: 'OK' })
   })
 

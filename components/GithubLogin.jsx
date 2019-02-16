@@ -1,3 +1,4 @@
+import Router from 'next/router'
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import React, { Fragment, useContext } from 'react'
@@ -19,19 +20,31 @@ const GithubLogin = () => {
       })
   }
 
-  const logout = () => {
+  const logout = async () => {
     firebase.auth().signOut()
+    Router.push('/')
+  }
+
+  const navigateToAdmin = async () => {
+    // buggy nextjs doesn't navigate properly, even w Link:
+    // https://github.com/zeit/next.js/issues/5598
+    // Router.push('/admin') //
+    window.location.href = '/admin'
   }
 
   if (user) {
     return (
-      <React.Fragment>
+      <div>
         <span>Welcome {user.displayName}</span>
-        {user.admin && <span>!admin!</span>}
+        {user.admin && (
+          <button type="button" onClick={navigateToAdmin}>
+            admin
+          </button>
+        )}
         <button type="button" onClick={logout}>
           Logout
         </button>
-      </React.Fragment>
+      </div>
     )
   }
   return (

@@ -1,6 +1,6 @@
 import seed from '../components/seed'
 
-function Home() {
+const Home = () => {
   return <div>Welcome to next.js!</div>
 }
 

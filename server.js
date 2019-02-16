@@ -2,8 +2,10 @@ const express = require('express')
 const { parse } = require('url')
 const next = require('next')
 const bodyParser = require('body-parser')
+const session = require('express-session')
+const FileStore = require('session-file-store')(session)
 const Octokit = require('@octokit/rest')
-const { fb, config } = require('./server/firebase')
+const { firebase, config } = require('./server/firebase')
 
 const dev = process.env.NODE_ENV !== 'production'
 const port = process.env.PORT || 3000
@@ -11,8 +13,15 @@ const app = next({ dev })
 const handle = app.getRequestHandler()
 
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
-
 const rewardAmount = 100
+const admins = [
+  'dimroc@gmail.com',
+  'alex+git@rival-studios.com' // left off others for testing
+]
+
+const isAdmin = decodedToken => {
+  return admins.includes(decodedToken.email) // question security, aarrr!
+}
 
 const createNoAddressComment = async (octokit, body) => {
   const result = await octokit.issues
@@ -63,6 +72,17 @@ app.prepare().then(() => {
   })
 
   server.use(bodyParser.json())
+  server.use(
+    session({
+      secret: 'thar be bounti here, yaarr',
+      saveUninitialized: true,
+      store: new FileStore({ path: '/tmp/sessions', secret: 'thar be bounti here, yaarr' }),
+      resave: false,
+      rolling: true,
+      httpOnly: true,
+      cookie: { maxAge: 604800000 } // week
+    })
+  )
 
   server.post('/gh_webhooks', (req, _res) => {
     console.log('got webhook action', req.body.action)
@@ -77,6 +97,34 @@ app.prepare().then(() => {
 
   server.get('/config', (req, res) => {
     res.json(config)
+  })
+
+  server.post('/api/login', (req, res) => {
+    if (!req.body) return res.sendStatus(400)
+
+    const { token } = req.body
+    firebase
+      .auth()
+      .verifyIdToken(token)
+      .then(decodedToken => {
+        // https://github.com/zeit/next.js/issues/5654#issuecomment-449856204
+        const vettedUser = decodedToken
+        vettedUser.displayName = decodedToken.name // mapping name to displayName
+        vettedUser.admin = isAdmin(decodedToken)
+        req.session.user = vettedUser
+        return vettedUser
+      })
+      .then(user => res.json({ status: true, user }))
+      .catch(error => {
+        console.error('post api login got error:', error)
+        res.json({ error })
+      })
+  })
+
+  server.post('/api/logout', (req, res) => {
+    req.session.decodedToken = null
+    req.session.admin = null
+    res.json({ status: true })
   })
 
   server

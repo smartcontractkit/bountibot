@@ -40,18 +40,21 @@ const createComment = async comment => {
     .get(key)
     .then(doc => {
       if (!doc.exists) {
-        const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
-        console.debug('posting GH comment', ghComment)
-        octokit.issues
-          .createComment(ghComment)
-          .then(() => {
-            collection
-              .doc(key)
-              .set(comment)
-              .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
-          })
-          .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
+        console.debug('Comment already exists on PR')
+        return
       }
+
+      const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
+      console.debug('posting GH comment', ghComment)
+      octokit.issues
+        .createComment(ghComment)
+        .then(() => {
+          collection
+            .doc(key)
+            .set(comment)
+            .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
+        })
+        .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
     })
     .catch(err => console.error(`Error obtaining existing PR comment from FB: ${err}`))
 }

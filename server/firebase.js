@@ -1,5 +1,5 @@
 const admin = require('firebase-admin')
-const Firestore = require('@google-cloud/firestore')
+const serviceAccount = require('./bountibot-development-2a0f154f120e')
 
 const config = {
   apiKey: process.env.BB_API_KEY,
@@ -8,15 +8,14 @@ const config = {
   projectId: process.env.BB_PROJECT_ID,
   storageBucket: process.env.BB_STORAGE_BUCKET,
   messagingSenderId: process.env.BB_MESSAGING_SENDER_ID,
-  keyFilename: './bountibot-development-2a0f154f120e.json'
+  credential: admin.credential.cert(serviceAccount)
 }
-
-const firestore = new Firestore(config)
 
 // this should only be included once...
 // do note that admin apps bypass all security rules.
+const firebase = admin.initializeApp(config)
 module.exports = {
-  firebase: admin,
-  storage: firestore,
+  firebase,
+  storage: firebase.firestore(),
   config
 }

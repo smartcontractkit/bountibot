@@ -24,6 +24,28 @@ const isAuthorized = (user, router) => {
   return !user.admin && !router.pathname.match(/^\/admin/)
 }
 
+// https://github.com/zeit/next.js/blob/canary/examples/with-firebase-authentication/pages/index.js
+const postLogin = async user => {
+  return user.getIdToken().then(token => {
+    // eslint-disable-next-line no-undef
+    return fetch('/api/login', {
+      method: 'POST',
+      // eslint-disable-next-line no-undef
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+      credentials: 'same-origin',
+      body: JSON.stringify({ token })
+    })
+  })
+}
+
+const postLogout = async () => {
+  // eslint-disable-next-line no-undef
+  return fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'same-origin'
+  })
+}
+
 class MyApp extends App {
   constructor(props) {
     super(props);
@@ -34,7 +56,19 @@ class MyApp extends App {
 
   componentDidMount() {
     const { pageProps, router } = this.props
-    const { user } = pageProps
+    const { user, config } = pageProps
+
+    const fbapp = clientSideFirebase(config)
+    if (fbapp) {
+      fbapp.auth().onAuthStateChanged(async userParam => {
+        if (userParam) {
+          const resp = await postLogin(userParam)
+          const respjs = await resp.json()
+        } else {
+          await postLogout()
+        }
+      })
+    }
 
     if (isAuthorized(user, router)) {
       // Remove the server-side injected CSS.

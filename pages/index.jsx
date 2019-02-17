@@ -29,22 +29,8 @@ const styles = _theme => {
   }
 }
 
-const Home = ({ seedJokes, classes }) => {
+const Home = ({ classes }) => {
   const firebase = useContext(FirebaseContext)
-  const [jokes, setJokes] = useState(seedJokes)
-
-  useEffect(() => {
-    firebase
-      .firestore()
-      .collection('dimitris_jokes')
-      .onSnapshot(querySnapshot => {
-        const queryJokes = []
-        querySnapshot.forEach(doc => {
-          queryJokes.push(doc.data())
-        })
-        setJokes(queryJokes)
-      })
-  })
 
   return (
     <Grid container justify="center" className={classes.container}>
@@ -65,11 +51,4 @@ const Home = ({ seedJokes, classes }) => {
   )
 }
 
-Home.getInitialProps = async ({ req }) => {
-  // have to hit server endpoint when SSRing
-  const res = await fetch(baseUrl(req) + `/jokes`)
-  const resJSON = await res.json()
-  return { seedJokes: resJSON.jokes }
-}
-
-export default withStyles(styles)(seed(Home))
+export default withStyles(styles)(Home)

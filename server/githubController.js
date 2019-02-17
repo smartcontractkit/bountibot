@@ -3,7 +3,7 @@ const express = require('express')
 const _ = require('lodash')
 const { storage } = require('./firebase')
 const { l18nComment } = require('./comments')
-const { botName } = require('./constants')
+const { rewardAmount, botName } = require('./constants')
 
 const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
@@ -187,7 +187,8 @@ const openedIssue = async body => {
       title: body.pull_request.title,
       id: body.pull_request.number,
       description: body.pull_request.body,
-      userID: body.sender.id
+      userID: body.sender.id,
+      amount: rewardAmount
     })
 
     console.log('openedIssue', pr, state)

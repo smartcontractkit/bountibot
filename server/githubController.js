@@ -110,7 +110,7 @@ const createUnrecognizedCommandComment = (pr, state, command) => {
   return createComment(pr, state, ['unrecognized', command])
 }
 
-const createRewardedComment = (pr, state, address) => {
+const createRewardedComment = (pr, state) => {
   const { sender } = pr
   return createComment(pr, state, ['paid', sender])
 }
@@ -149,21 +149,21 @@ const updatedComment = async body => {
   getPRState(pr).then(state => {
     const match = (body.comment.body || '').match(commandRegex)
     if (match) {
-      console.log('body.comment.body', body.comment.body)
       console.log('match', match)
       switch (match[1]) {
         case 'pay':
           const payee = match[3]
           if (isPresent(payee)) {
-            createRewardableComment(pr, state, payee)
-              .then(() => setPRState(pr, _.assign({}, state, { payee })))
+            setPRState(pr, _.assign({}, state, { payee }))
+              .then(state => createRewardableComment(pr, state, payee))
           } else {
             createComment(pr, state, ['missingPayAddress'])
           }
           break
         case 'lang':
           const language = match[3]
-          createComment(pr, state, ['language']).then(() => setPRState(pr, _.assign({}, state, { language })))
+          setPRState(pr, _.assign({}, state, { language }))
+            .then(state => createComment(pr, state, ['language']))
           break
         default:
           createUnrecognizedCommandComment(pr, state, match[1])

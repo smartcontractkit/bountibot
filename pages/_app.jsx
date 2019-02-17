@@ -1,4 +1,5 @@
 import React from 'react';
+import Router from 'next/router'
 import App, { Container } from 'next/app'
 import Head from 'next/head'
 import { MuiThemeProvider } from '@material-ui/core/styles'
@@ -11,6 +12,18 @@ import getPageContext from '../src/getPageContext';
 import getInitialConfig from '../src/getInitialConfig'
 import Header from '../components/Header'
 
+const isAuthorized = (user, router) => {
+  if (user === undefined) {
+    return router.pathname === '/login'
+  }
+
+  if (user.admin) {
+    return true
+  }
+
+  return !user.admin && router.pathname.match(/^\/admin/)
+}
+
 class MyApp extends App {
   constructor(props) {
     super(props);
@@ -20,10 +33,17 @@ class MyApp extends App {
   pageContext = null;
 
   componentDidMount() {
-    // Remove the server-side injected CSS.
-    const jssStyles = document.querySelector('#jss-server-side');
-    if (jssStyles && jssStyles.parentNode) {
-      jssStyles.parentNode.removeChild(jssStyles);
+    const { pageProps, router } = this.props
+    const { user } = pageProps
+
+    if (isAuthorized(user, router)) {
+      // Remove the server-side injected CSS.
+      const jssStyles = document.querySelector('#jss-server-side');
+      if (jssStyles && jssStyles.parentNode) {
+        jssStyles.parentNode.removeChild(jssStyles);
+      }
+    } else {
+      Router.push('/')
     }
   }
 

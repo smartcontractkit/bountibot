@@ -1,6 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import { NextAuth } from 'next-auth/client'
 import { useTranslation } from 'react-i18next'
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
@@ -8,14 +6,11 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 
-const Unauthorized = () => {
-  const { t } = useTranslation()
-  return <p>{t('Unauthorized')}</p>
-}
 const Empty = () => {
   const { t } = useTranslation()
   return <p>{t('Empty')}</p>
 }
+
 const Prs = ({ prs }) => {
   const { t } = useTranslation()
 
@@ -56,14 +51,13 @@ const Index = class extends React.Component {
   }
 
   render() {
-    const { user } = this.props.pageContext
-    const { prs } = this.props
+    const { user, prs } = this.props
 
-    if (true || user) {
+    if (user) {
       return <Render prs={prs} />
     }
 
-    return <Unauthorized />
+    return <></>
   }
 }
 

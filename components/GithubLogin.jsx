@@ -20,22 +20,10 @@ const GithubLogin = () => {
       })
   }
 
-  const navigateToAdmin = async () => {
-    // buggy nextjs doesn't navigate properly, even w Link:
-    // https://github.com/zeit/next.js/issues/5598
-    // Router.push('/admin') //
-    window.location.href = '/admin'
-  }
-
   if (user) {
     return (
       <div>
         <span>Welcome {user.displayName}</span>
-        {user.admin && (
-          <button type="button" onClick={navigateToAdmin}>
-            admin
-          </button>
-        )}
       </div>
     )
   }

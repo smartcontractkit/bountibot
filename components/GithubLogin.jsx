@@ -20,11 +20,6 @@ const GithubLogin = () => {
       })
   }
 
-  const logout = async () => {
-    firebase.auth().signOut()
-    Router.push('/')
-  }
-
   const navigateToAdmin = async () => {
     // buggy nextjs doesn't navigate properly, even w Link:
     // https://github.com/zeit/next.js/issues/5598
@@ -41,9 +36,6 @@ const GithubLogin = () => {
             admin
           </button>
         )}
-        <button type="button" onClick={logout}>
-          Logout
-        </button>
       </div>
     )
   }

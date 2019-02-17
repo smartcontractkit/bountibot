@@ -74,16 +74,18 @@ const createComment = async ({ fullRepoName, owner, sender, issueNumber }, body)
     .catch(err => console.error(`Error obtaining existing PR comment from FB: ${err}`))
 }
 
-const createNoAddressComment = async ({ fullRepoName, owner, sender, issueNumber }) => {
-  createComment(fullRepoName, owner, sender, issueNumber, l18nComment('noAddressComment', fullRepoName))
+const createNoAddressComment = async pr => {
+  const { fullRepoName } = pr
+  createComment(pr, l18nComment('noAddressComment', fullRepoName))
 }
 
-const createRewardableComment = async ({ fullRepoName, owner, sender, issueNumber }, body, address) => {
-  createComment(fullRepoName, owner, sender, issueNumber, l18nComment('thankyou', owner, address))
+const createRewardableComment = async (pr, body, address) => {
+  const { owner } = pr
+  createComment(pr, l18nComment('thankyou', owner, address))
 }
 
-const createUnrecognizedCommandComment = async ({ fullRepoName, owner, sender, issueNumber }, body, command) => {
-  createComment(fullRepoName, owner, sender, issueNumber, l18nComment('unrecognized', command))
+const createUnrecognizedCommandComment = async (pr, body, command) => {
+  createComment(pr, l18nComment('unrecognized', command))
 }
 
 const postReward = async body => {

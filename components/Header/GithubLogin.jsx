@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import Button from '@material-ui/core/Button'
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import { FirebaseContext } from '../FirebaseContext'
@@ -18,9 +19,9 @@ const GithubLogin = () => {
   }
 
   return (
-    <button type="button" onClick={login}>
+    <Button variant="contained" onClick={login}>
       Sign In w GitHub
-    </button>
+    </Button>
   )
 }
 

@@ -16,6 +16,7 @@
     "@google-cloud/storage": "^2.4.2",
     "@material-ui/core": "^4.0.0-alpha.0",
     "@octokit/rest": "^16.15.0",
+    "bn.js": "^4.11.8",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "express-file-store": "^1.0.3",
@@ -29,14 +30,17 @@
     "next": "^8.0.1",
     "next-auth": "^1.12.1",
     "openzeppelin-solidity": "^1.12.0",
+    "prettier-eslint_d": "0.0.3",
     "prop-types": "^15.7.2",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
     "react-i18next": "^10.1.2",
     "react-jss": "^8.6.1",
+    "request-promise": "^4.2.4",
     "session-file-store": "^1.2.0",
     "styled-jsx": "^3.2.1",
-    "truffle": "^5.0.4"
+    "truffle": "^5.0.4",
+    "truffle-hdwallet-provider": "^1.0.4"
   },
   "devDependencies": {
     "eslint": "^5.3.0",

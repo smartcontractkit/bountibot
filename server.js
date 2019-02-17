@@ -7,11 +7,17 @@ const FileStore = require('session-file-store')(session)
 const { storage, config } = require('./server/firebase')
 const githubController = require('./server/githubController')
 const loginController = require('./server/loginController')
+const { payLink } = require('./server/payment')
 
 const dev = process.env.NODE_ENV !== 'production'
 const port = process.env.PORT || 3000
 const app = next({ dev })
 const handle = app.getRequestHandler()
+
+const filteredEnvs = Object.keys(process.env).filter(k => k.startsWith('BB_'))
+console.log('PROCESS ENV:')
+filteredEnvs.forEach(k => console.log(k, '=', process.env[k]))
+
 
 app.prepare().then(() => {
   const server = express()
@@ -50,6 +56,11 @@ app.prepare().then(() => {
       jokes.push(j.data())
     })
     res.json({ jokes })
+  })
+
+  server.get('/paya', async (_, res) => {
+    const reply = await payLink('00000000000000000000000000000000000aaaaa')
+    res.json(reply)
   })
 
   // catch all sends to nextjs

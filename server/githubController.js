@@ -30,9 +30,9 @@ router.post('/gh_webhooks', (req, _res) => {
   console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}, sender: ${req.body.sender.login}.`)
 
   // Guard against infinite recursion
-  if (req.body.sender.login === self) {
-    return
-  }
+  //if (req.body.sender.login === self) {
+    //return
+  //}
 
   switch (req.body.action) {
     case 'created':
@@ -52,6 +52,9 @@ router.post('/gh_webhooks', (req, _res) => {
       break
     case 'edited':
       if ('comment' in req.body) {
+        if (req.body.sender.login === self) {
+          return
+        }
         updatedComment(req.body)
       } else {
         editedIssue(req.body)

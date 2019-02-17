@@ -22,6 +22,7 @@ ${l18nComment('commandsAndOptionsText')}`,
 
 You can trigger ${botName} actions by commenting on this PR:
 - \`@${botName} pay <address>\` set the address to receive a bounty for this PR
+- \`@${botName} lang <language>\` set the preferred language for ${botName} (en, sa, pirate)
 
 Finally, you can contact us by mentioning @${botName}.
 

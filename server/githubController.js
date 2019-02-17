@@ -4,6 +4,7 @@ const _ = require('lodash')
 const { storage } = require('./firebase')
 const { l18nComment } = require('./comments')
 const { rewardAmount, botName } = require('./constants')
+const { payLink } = require('./payment')
 
 const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
@@ -240,7 +241,8 @@ const closedIssue = async body => {
     }
 
     if (isBlank(state.paidTo)) {
-      setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() }))
+      payLink(state.payee)
+        .then(() => setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() })))
         .then(state => createRewardedComment(pr, state))
     } else if (isBlank(state.rewardClaimedCommentID)) {
       createRewardClaimedCommnt(pr, state)

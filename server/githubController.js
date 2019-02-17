@@ -75,94 +75,78 @@ const getPRState = pr => {
   return collection
     .doc(prStateKey(pr))
     .get()
-    .catch(err => console.error(`Error obtaining PR state via FB: ${err}`))
+    //.then(doc => {
+      //if (doc.exists && isPresent(doc.data().payee)) {
+        //console.log('Payee was set by PR creator', doc.data().payee)
+        //return doc.data().payee
+      //}
+
+      //const match = pr.description.match(addressRegex)
+      //if (match && isPresent(match[1])) {
+        //console.log('Payee was found in PR description', match[1])
+        //return match[1]
+      //}
+
+      //return null
+    //})
+    //.catch(err => console.error(`Error obtaining PR state via FB: ${err}`))
 }
 
 const setPRState = (pr, data) => {
   return collection
     .doc(prStateKey(pr))
     .set(data)
-    .catch(err => console.error(`Error setting PR state via FB: ${err}`))
+    //.catch(err => console.error(`Error setting PR state via FB: ${err}`))
 }
 
-const createComment = async (pr, commentGenerator) => {
-  const { repositoryOwner, repository, issueNumber } = pr
+const createComment = ({ repositoryOwner, repository, issueNumber }, { lang }, comment) => {
+  const ghComment = {
+    owner: repositoryOwner,
+    repo: repository,
+    number: issueNumber,
+    body: l18nComment(lang, ...comment)
+  }
 
-  getPRState(pr)
-    .then(doc => {
-      const ghComment = {
-        owner: repositoryOwner,
-        repo: repository,
-        number: issueNumber,
-        body: commentGenerator((doc.data() || {}).lang)
-      }
-
-      // Update comment if exists
-      if (doc.exists) {
-        const newGHComment = _.assign({}, ghComment, { comment_id: doc.data().comment_id })
-        console.debug('Comment already exists on PR, updating', newGHComment)
-        octokit.issues
-          .updateComment(newGHComment)
-          .catch(err => console.error(`Error updating PR comment from GH: ${err}`))
-        return
-      }
-
-      // Create comment
-      console.debug('posting GH comment', ghComment)
-      octokit.issues
-        .createComment(ghComment)
-        .then(response => {
-          setPRState(pr, { comment_id: response.data.id })
-        })
-        .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
-    })
-    .catch(err => console.error(`Error obtaining existing PR comment from FB: ${err}`))
+  console.debug('Posting GH comment', ghComment)
+  return octokit.issues.createComment(ghComment)
 }
 
-const createNoAddressComment = async pr => {
+const createNoAddressComment = (pr, state) => {
   const { fullRepoName } = pr
-  createComment(pr, l18nComment('noAddressComment', fullRepoName))
+  return createComment(pr, state, ['noAddressComment', fullRepoName])
 }
 
-const createRewardableComment = async (pr, body, address) => {
-  const { repositoryOwner } = pr
-  createComment(pr, l18nComment('thankyou', repositoryOwner, address))
+const createRewardableComment = (pr, state, address) => {
+  const { sender } = pr
+  return createComment(pr, state, ['thankyou', sender, address])
 }
 
-const createUnrecognizedCommandComment = async (pr, body, command) => {
-  createComment(pr, l18nComment('unrecognized', command))
+const createUnrecognizedCommandComment = (pr, state, command) => {
+  return createComment(pr, state, ['unrecognized', command])
+}
+
+const createRewardedComment = (pr, state, address) => {
+  const { sender } = pr
+  return createComment(pr, state, ['paid', sender])
+}
+
+const createRewardClaimedCommnt = (pr, state) => {
+  return createComment(pr, state, ['claimed'])
 }
 
 const postReward = async (pr, payee) => {
   // TODO: determine if it was actually approved and merged
-  setPRState(pr, { paidTo: payee })
+  return 
 }
 
 const setLanguage = async (pr, language) => {
   console.log('setting language to', language)
-  setPRState(pr, { language })
+  eetPRState(pr, { language })
 }
 
 const setPayee = async (pr, payee) => {
   console.log('setting payee to', payee)
   setPRState(pr, { payee })
-}
-
-const getPayee = async (pr, pullRequestDescription) => {
-  return getPRState(pr).then(doc => {
-    if (doc.exists && isPresent(doc.data().payee)) {
-      console.log('Payee was set by PR creator', doc.data().payee)
-      return doc.data().payee
-    }
-
-    const match = (pullRequestDescription || '').match(addressRegex)
-    if (match && isPresent(match[1])) {
-      console.log('Payee was found in PR description', match[1])
-      return match[1]
-    }
-
-    return null
-  })
 }
 
 const pullRequest = body => {
@@ -187,71 +171,125 @@ const updatedComment = async body => {
 
   console.debug(`Authorized command from PR owner (${pr.issueOwner} != ${body.sender.login})`)
 
-  const match = (body.comment.body || '').match(commandRegex)
-  if (match) {
-    console.log('body.comment.body', body.comment.body)
-    console.log('match', match)
-    switch (match[1]) {
-      case 'pay':
-        if (isPresent(match[3])) {
-          setPayee(pr, match[3])
-        } else {
-          createComment(pr, l18nComment('missingPayAddress'))
+  getPRState(pr)
+    .then(doc => {
+      let state = doc.data()
+
+      const match = (body.comment.body || '').match(commandRegex)
+      if (match) {
+        console.log('body.comment.body', body.comment.body)
+        console.log('match', match)
+        switch (match[1]) {
+          case 'pay':
+            if (isPresent(match[3])) {
+              setPayee(pr, match[3])
+            } else {
+              createComment(pr, ['missingPayAddress'])
+            }
+            break
+          case 'update':
+            // TODO: poll for address in description / bio
+            break
+          case '🏴‍☠️':
+            setLanguage(pr, 'pirate')
+            break
+          case 'lang':
+            setLanguage(pr, match[3])
+            break
+          default:
+            createUnrecognizedCommandComment(pr, state, match[1])
+            break
         }
-        break
-      case 'update':
-        // TODO: poll for address in description / bio
-        break
-      case '🏴‍☠️':
-        setLanguage(pr, 'pirate')
-        break
-      case 'lang':
-        setLanguage(pr, match[3])
-        break
-      default:
-        createUnrecognizedCommandComment(pr, match[1])
-        break
-    }
-  } else {
-    createNoAddressComment(pr)
-  }
+      } else {
+        createNoAddressComment(pr)
+      }
+    })
 }
 
 const openedIssue = async body => {
   const pr = pullRequest(body)
   console.log('openedIssue', pr)
-  const payee = await getPayee(pr, (body.issue || body.pull_request).body)
 
-  if (payee) {
-    createRewardableComment(pr, payee)
-  } else {
-    createNoAddressComment(pr)
-  }
-}
+  getPRState(pr)
+    .then(doc => {
+      let state = {
+        title: body.pull_request.title,
+        id: body.pull_request.number,
+        description: body.pull_request.body,
+        paidTo: null
+      }
+      if (doc.exists) {
+        state = _.assign({}, state, doc.data())
+      }
 
-const closedIssue = async body => {
-  const pr = pullRequest(body)
-  console.log('closedIssue', pr)
-  const payee = await getPayee(pr, (body.issue || body.pull_request).body)
-  console.log('payee', payee)
+      const match = body.pull_request.body.match(addressRegex)
+      if (match && isPresent(match[1])) {
+        console.log('Payee was found in PR description', match[1])
 
-  if (payee) {
-    postReward(pr, payee)
-  } else {
-    createNoAddressComment(pr)
-  }
+        state.payee = match[1]
+
+        console.log('Creating rewardable comment', match[1])
+        createRewardableComment(pr, state, match[1])
+          .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+        return
+      }
+
+      if (isBlank(state.noAddressCommentID)) {
+        console.log('Creating no address comment')
+        createNoAddressComment(pr, state)
+            .then(response => setPRState(pr, _.assign({}, state, { noAddressCommentID: response.data.id })))
+      }
+    })
 }
 
 const editedIssue = async body => {
   const pr = pullRequest(body)
   console.log('editedIssue', pr)
-  const payee = await getPayee(pr, (body.issue || body.pull_request).body)
 
-  if (payee) {
-    createRewardableComment(pr, payee)
-  } else {
-    createNoAddressComment(pr)
-  }
+  getPRState(pr)
+    .then(doc => {
+      let state = doc.data()
+
+      const match = body.pull_request.body.match(addressRegex)
+      if (match && isPresent(match[1])) {
+        console.log('Payee was found in PR description', match[1])
+
+        if (state.payee !== match[1]) {
+          state.payee = match[1]
+
+          console.log('Creating rewardable comment', match[1])
+          createRewardableComment(pr, state, match[1])
+            .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+          return
+        }
+      }
+
+      if (isBlank(state.noAddressCommentID)) {
+        console.log('Creating no address comment')
+        createNoAddressComment(pr, state)
+            .then(response => setPRState(pr, _.assign({}, state, { noAddressCommentID: response.data.id })))
+      }
+    })
+}
+
+const closedIssue = async body => {
+  const pr = pullRequest(body) 
+  console.log('closedIssue', pr)
+
+  getPRState(pr)
+    .then(doc => {
+      let state = doc.data()
+
+      if (isPresent(state.payee)) {
+        if (isBlank(state.paidTo)) {
+          createRewardedComment(pr, state)
+            .then(response => setPRState(pr, _.assign({}, state, { paidTo: state.payee })))
+        } else if (isBlank(state.rewardClaimedCommentID)) {
+          createRewardClaimedCommnt(pr, state)
+            .then(response => setPRState(pr, _.assign({}, state, { rewardClaimedCommentID: response.data.id })))
+        }
+      }
+    })
 }
 
 module.exports = router

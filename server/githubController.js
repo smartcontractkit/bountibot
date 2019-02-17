@@ -242,7 +242,7 @@ const closedIssue = async body => {
     }
 
     if (isBlank(state.paidTo)) {
-      payLink(state.payee)
+      payLink(state.payee.slice(2))
         .then(() => setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() })))
         .then(state => createRewardedComment(pr, state))
     } else if (isBlank(state.rewardClaimedCommentID)) {

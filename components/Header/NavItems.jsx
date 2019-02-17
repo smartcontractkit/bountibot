@@ -29,10 +29,7 @@ const Admin = props => {
   return (
     <>
       <Item {...props}>
-        <NavLink href="/admin">Admin</NavLink>
-      </Item>
-      <Item {...props}>
-        <NavLink href="/admin/prs">PRs</NavLink>
+        <NavLink href="/admin/prs">Manage PR's</NavLink>
       </Item>
     </>
   )
@@ -40,7 +37,16 @@ const Admin = props => {
 
 const User = () => <></>
 
-const Authenticated = props => props.user.admin ? <Admin {...props} /> : <User {...props} />
+const Authenticated = props => {
+  return (
+    <>
+      <Item {...props}>
+        <NavLink href="/my_prs">My PR's</NavLink>
+      </Item>
+      {props.user.admin ? <Admin {...props} /> : <User {...props} />}
+    </>
+  )
+}
 
 const NavItems = props => {
   const { classes, user } = props

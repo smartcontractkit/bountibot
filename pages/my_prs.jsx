@@ -6,8 +6,6 @@ import githubUserId from '../src/githubUserId'
 
 const filterMyPrs = (prs, user) => {
   const userId = githubUserId(user)
-  console.log('userId: %o', userId)
-  console.log(prs)
   return prs.filter(pr => pr.userID === userId)
 }
 

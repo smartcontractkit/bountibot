@@ -231,6 +231,7 @@ const closedIssue = async body => {
   const pr = pullRequest(body)
   getPRState(pr).then(state => {
     console.log('closedIssue', pr, state)
+    console.log('body', body)
 
     if (isBlank(state.payee)) {
       console.warn('PR was closed without ever setting payee')
@@ -239,7 +240,7 @@ const closedIssue = async body => {
 
     if (isBlank(state.paidTo)) {
       payLink(state.payee)
-        .then(() => setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() })))
+        .then((result) => console.debug('result', result) || setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() })))
         .then(state => createRewardedComment(pr, state))
     } else if (isBlank(state.rewardClaimedCommentID)) {
       createRewardClaimedCommnt(pr, state)

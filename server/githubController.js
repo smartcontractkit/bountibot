@@ -24,6 +24,8 @@ const isPresent = value => {
   return !isBlank(value)
 }
 
+const collection = storage.collection('bountibotState')
+
 router.post('/gh_webhooks', (req, _res) => {
   console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}, sender: ${req.body.sender.login}.`)
 
@@ -60,23 +62,37 @@ router.post('/gh_webhooks', (req, _res) => {
   }
 })
 
-const createComment = async ({ fullRepoName, repository, repositoryOwner, sender, issueNumber }, body) => {
-  const collection = storage.collection('bountibotState')
+const prStateKey = ({ fullRepoName, sender, issueNumber }) => {
+  return `${fullRepoName}/${sender}.${issueNumber}`
+}
 
-  const key = `${fullRepoName}/${sender}.${issueNumber}`
+const getPRState = pr => {
+  return collection
+    .doc(prStateKey(pr))
+    .get()
+    .catch(err => console.error(`Error obtaining PR state via FB: ${err}`))
+}
 
+const setPRState = (pr, data) => {
+  return collection
+    .doc(prStateKey(pr))
+    .set(data)
+    .catch(err => console.error(`Error setting PR state via FB: ${err}`))
+}
+
+const createComment = async (pr, body) => {
+  const { repositoryOwner, repository, issueNumber } = pr
   const ghComment = { owner: repositoryOwner, repo: repository, number: issueNumber, body }
   console.debug('posting GH comment', ghComment)
 
   // Check storage to see if we already commented
-  collection
-    .doc(key)
-    .get()
+  getPRState(pr)
     .then(doc => {
       if (doc.exists) {
         const newGHComment = _.assign({}, ghComment, { comment_id: doc.data().comment_id })
         console.debug('Comment already exists on PR, updating', newGHComment)
-        octokit.issues.updateComment(newGHComment)
+        octokit.issues
+          .updateComment(newGHComment)
           .catch(err => console.error(`Error updating PR comment from GH: ${err}`))
         return
       }
@@ -86,10 +102,7 @@ const createComment = async ({ fullRepoName, repository, repositoryOwner, sender
         .createComment(ghComment)
         .then(response => {
           // Record that we commented
-          collection
-            .doc(key)
-            .set({ comment_id: response.data.id })
-            .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
+          setPRState({ comment_id: response.data.id })
         })
         .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
     })
@@ -119,41 +132,29 @@ const postReward = async body => {
   }
 }
 
-const setPayee = async ({ fullRepoName, repositoryOwner, sender, issueNumber }, payee) => {
-  const collection = storage.collection('bountibotState')
-
-  const key = `${fullRepoName}/${sender}.${issueNumber}`
-
-  console.log('setting payee to', payee)
-
-  collection
-    .doc(key)
-    .set({ payee })
-    .catch(err => console.error(`Error setting payee via FB: ${err}`))
-    .then(() => createRewardableComment(fullRepoName, repositoryOwner, sender, issueNumber, payee))
+const setLanguage = async (pr, language) => {
+  console.log('setting language to', language)
+  setPRState(pr, { language })
 }
 
-const getPayee = async ({ fullRepoName, sender, issueNumber }, pullRequestDescription) => {
-  const collection = storage.collection('bountibotState')
+const setPayee = async (pr, payee) => {
+  console.log('setting payee to', payee)
+  setPRState(pr, { payee })
+}
 
-  const key = `${fullRepoName}/${sender}.${issueNumber}`
+const getPayee = async (pr, pullRequestDescription) => {
+  return getPRState(pr).then(doc => {
+    if (doc.exists && isPresent(doc.data().payee)) {
+      console.log('Payee was set by PR creator', doc.data().payee)
+      return doc.data().payee
+    }
 
-  return collection
-    .doc(key)
-    .get()
-    .then(doc => {
-      if (doc.exists && isPresent(doc.data().payee)) {
-        console.log('Payee was set by PR creator', doc.data().payee)
-        return doc.data().payee
-      }
-
-      const match = (pullRequestDescription || '').match(addressRegex)
-      if (match && isPresent(match[1])) {
-        console.log('Payee was found in PR description', match[1])
-        return match[1]
-      }
-    })
-    .catch(err => console.error(`Error getting payee via FB: ${err}`))
+    const match = (pullRequestDescription || '').match(addressRegex)
+    if (match && isPresent(match[1])) {
+      console.log('Payee was found in PR description', match[1])
+      return match[1]
+    }
+  })
 }
 
 const pullRequest = body => {
@@ -194,7 +195,10 @@ const updatedComment = async body => {
         // TODO: poll for address in description / bio
         break
       case '🏴‍☠️':
-        // TODO: save language preference to firebase
+        setLanguage(pr, 'pirate')
+        break
+      case 'lang':
+        setLanguage(pr, match[3])
         break
       default:
         createUnrecognizedCommandComment(pr, match[1])

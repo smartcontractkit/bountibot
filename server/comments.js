@@ -62,7 +62,6 @@ ${l18nComment(lang, 'commandsAndOptionsText')}`,
 const l18nComment = (lang, key, ...args) => {
   let useLang = lang || defaultLang
   let comment = comments[useLang][key]
-  console.log('lang', useLang, 'comment', comment)
   if (comment == null) {
     console.debug(`No comment for language '${useLang}' falling back to en for '${key}'`)
     comment = comments.en[key]

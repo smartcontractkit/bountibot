@@ -129,11 +129,6 @@ const setLanguage = async (pr, language) => {
   setPRState(pr, { language })
 }
 
-const setPayee = async (pr, payee) => {
-  console.log('setting payee to', payee)
-  setPRState(pr, { payee })
-}
-
 const pullRequest = body => {
   return {
     fullRepoName: body.repository.full_name,
@@ -154,7 +149,7 @@ const updatedComment = async body => {
     return
   }
 
-  console.debug(`Authorized command from PR owner (${pr.issueOwner} != ${body.sender.login})`)
+  console.debug(`Authorized command from PR owner (${pr.issueOwner} == ${body.sender.login})`)
 
   getPRState(pr).then(state => {
     const match = (body.comment.body || '').match(commandRegex)
@@ -163,20 +158,17 @@ const updatedComment = async body => {
       console.log('match', match)
       switch (match[1]) {
         case 'pay':
-          if (isPresent(match[3])) {
-            setPayee(pr, match[3])
+          const payee = match[3]
+          if (isPresent(payee)) {
+            createRewardableComment(pr, state, payee)
+              .then(() => setPRState(pr, _.assign({}, state, { payee })))
           } else {
             createComment(pr, ['missingPayAddress'])
           }
           break
-        case 'update':
-          // TODO: poll for address in description / bio
-          break
-        case '🏴‍☠️':
-          setLanguage(pr, 'pirate')
-          break
         case 'lang':
-          setLanguage(pr, match[3])
+          const language = match[3]
+          setPRState(pr, _.assign({}, state, { language }))
           break
         default:
           createUnrecognizedCommandComment(pr, state, match[1])
@@ -258,7 +250,7 @@ const closedIssue = async body => {
 
     if (isBlank(state.paidTo)) {
       createRewardedComment(pr, state)
-        .then(response => setPRState(pr, _.assign({}, state, { paidTo: state.payee })))
+        .then(() => setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() })))
     } else if (isBlank(state.rewardClaimedCommentID)) {
       createRewardClaimedCommnt(pr, state)
         .then(response => setPRState(pr, _.assign({}, state, { rewardClaimedCommentID: response.data.id })))

@@ -17,3 +17,6 @@
 node_modules/
 .next
 server/bountibot-development-2a0f154f120e.json
+.envrc
+tmp/
+build/

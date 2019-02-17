@@ -171,8 +171,9 @@ const openedIssue = async body => {
   const pr = pullRequest(body)
   getPRState(pr).then(_state => {
     const state = _.assign({}, _state, {
-      title: body.pull_request.title,
       id: body.pull_request.number,
+      author: body.sender.login,
+      title: body.pull_request.title,
       description: body.pull_request.body,
       userID: body.sender.id,
       amount: rewardAmount

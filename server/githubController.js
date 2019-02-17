@@ -134,7 +134,7 @@ const getPayee = async ({ fullRepoName, sender, issueNumber }, pullRequestDescri
     .catch(err => console.error(`Error getting payee via FB: ${err}`))
 }
 
-const pullRequest = async body => {
+const pullRequest = body => {
   return {
     fullName: body.repository.full_name,
     owner: body.repository.owner.login,
@@ -144,13 +144,11 @@ const pullRequest = async body => {
 }
 
 const createdComment = async body => {
-  console.log('createdComment', body)
-  const match = (body.comment.body || '').match(commandRegex)
-
-  console.log('match', match)
-
   const pr = pullRequest(body)
+  console.log('createdComment', body)
 
+  const match = (body.comment.body || '').match(commandRegex)
+  console.log('match', match)
   if (match) {
     switch (match[1]) {
       case 'pay':
@@ -170,9 +168,9 @@ const createdComment = async body => {
   }
 }
 
-
 const openedIssue = async body => {
   const pr = pullRequest(body)
+  console.log('openedIssue', pr)
   const payee = getPayee(pr, body.pull_request.body)
 
   if (payee) {
@@ -184,6 +182,7 @@ const openedIssue = async body => {
 
 const closedIssue = async body => {
   const pr = pullRequest(body)
+  console.log('closedIssue', pr)
   const payee = getPayee(pr, body.pull_request.body)
 
   if (payee) {
@@ -195,6 +194,7 @@ const closedIssue = async body => {
 
 const editedIssue = async body => {
   const pr = pullRequest(body)
+  console.log('editedIssue', pr)
   const payee = getPayee(pr, body.pull_request.body)
 
   if (payee) {

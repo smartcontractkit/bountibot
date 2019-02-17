@@ -2,9 +2,13 @@ import React from 'react'
 import fetch from 'isomorphic-unfetch'
 import PrTable from '../components/PrTable'
 import { initialPropsBaseUrl as baseUrl } from '../components/seed'
+import githubUserId from '../src/githubUserId'
 
 const filterMyPrs = (prs, user) => {
-  return prs.filter(pr => pr.email === user.email)
+  const userId = githubUserId(user)
+  console.log('userId: %o', userId)
+  console.log(prs)
+  return prs.filter(pr => pr.userID === userId)
 }
 
 const MyPrs = class extends React.Component {

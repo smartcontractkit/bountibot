@@ -1,5 +1,5 @@
 const rewardAmount = 100
 const botName = 'bountibot'
-const lang = 'en'
+const defaultLang = 'en'
 
-module.exports = { rewardAmount, botName, lang }
+module.exports = { rewardAmount, botName, defaultLang }

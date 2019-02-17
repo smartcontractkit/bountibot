@@ -1,4 +1,4 @@
-const { rewardAmount, botName, lang } = require('./constants')
+const { rewardAmount, botName, defaultLang } = require('./constants')
 
 const comments = {
   en: {
@@ -53,12 +53,15 @@ ${l18nComment('commandsAndOptionsText')}`,
 }
 
 const l18nComment = (key, ...args) => {
-  let comment = comments[lang][key]
-  if (comment == null) {
-    console.debug(`No comment for language '${lang}' falling back to en for '${key}'`)
-    comment = comments.en[key]
+  return lang => {
+    const useLang = lang || defaultLang
+    let comment = comments[useLang][key]
+    if (comment == null) {
+      console.debug(`No comment for language '${useLang}' falling back to en for '${key}'`)
+      comment = comments.en[key]
+    }
+    return comment(...args)
   }
-  return comment(...args)
 }
 
 module.exports = {l18nComment}

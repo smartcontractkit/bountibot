@@ -10,7 +10,7 @@ const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
 const commandRegex = new RegExp(`@${botName} (\\w+)(\\s+(\\w+))*`, 'i')
 
 // TODO: would be nice to use GH app instead of my account
-const self = 'j16r'
+const self = 'dimroc'
 
 const octokit = new Octokit({
   auth: `token ${process.env.GITHUB_KEY}`
@@ -35,15 +35,12 @@ router.post('/gh_webhooks', ({ body }) => {
   )
 
   // Guard against infinite recursion
-  //if (body.sender.login === self) {
-    //return
-  //}
+  if (body.sender.login === self) {
+    return
+  }
 
   switch (body.action) {
     case 'created':
-      if (body.sender.login === self) {
-        return
-      }
       if ('comment' in body) {
         updatedComment(body)
       }
@@ -59,9 +56,6 @@ router.post('/gh_webhooks', ({ body }) => {
       }
       break
     case 'edited':
-      if (body.sender.login === self) {
-        return
-      }
       if ('comment' in body) {
         updatedComment(body)
       } else {
@@ -91,14 +85,19 @@ const setPRState = (pr, data) => {
     .catch(err => console.error(`Error setting PR state via FB: ${err}`))
 }
 
-const createComment = async (pr, body) => {
+const createComment = async (pr, commentGenerator) => {
   const { repositoryOwner, repository, issueNumber } = pr
-  const ghComment = { owner: repositoryOwner, repo: repository, number: issueNumber, body }
-  console.debug('posting GH comment', ghComment)
 
-  // Check storage to see if we already commented
   getPRState(pr)
     .then(doc => {
+      const ghComment = {
+        owner: repositoryOwner,
+        repo: repository,
+        number: issueNumber,
+        body: commentGenerator((doc.data() || {}).lang)
+      }
+
+      // Update comment if exists
       if (doc.exists) {
         const newGHComment = _.assign({}, ghComment, { comment_id: doc.data().comment_id })
         console.debug('Comment already exists on PR, updating', newGHComment)
@@ -109,11 +108,11 @@ const createComment = async (pr, body) => {
       }
 
       // Create comment
+      console.debug('posting GH comment', ghComment)
       octokit.issues
         .createComment(ghComment)
         .then(response => {
-          // Record that we commented
-          setPRState({ comment_id: response.data.id })
+          setPRState(pr, { comment_id: response.data.id })
         })
         .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
     })

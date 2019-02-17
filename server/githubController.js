@@ -45,8 +45,9 @@ const createComment = async comment => {
     .get()
     .then(doc => {
       if (doc.exists) {
-        console.debug('Comment already exists on PR', doc.data())
-        octokit.issues.updateComment(_.assign({}, ghComment, { comment_id: doc.data().comment_id }))
+        const newGHComment = _.assign({}, ghComment, { comment_id: doc.data().comment_id })
+        console.debug('Comment already exists on PR, updating', newGHComment)
+        octokit.issues.updateComment(newGHComment)
         return
       }
 

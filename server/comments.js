@@ -1,7 +1,4 @@
-const { rewardAmount } = require('./constants')
-
-const botName = 'bountibot'
-const lang = 'en'
+const { rewardAmount, botName, lang } = require('./constants')
 
 const comments = {
   en: {
@@ -30,7 +27,8 @@ You can trigger ${botName} actions by commenting on this PR:
 Finally, you can contact us by mentioning @${botName}.
 
 </details>`,
-    currency: () => `LINK`
+    currency: () => `LINK`,
+    unrecognized: (body, command) => `The command ${command} is not recognized.`
   },
   sp: {
     noAddressComment: body => `Aloha! Yo soy ${botName} 🤖.

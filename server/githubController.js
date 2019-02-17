@@ -3,19 +3,26 @@ const express = require('express')
 const _ = require('lodash')
 const { storage } = require('./firebase')
 const { l18nComment } = require('./comments')
-const { rewardAmount } = require('./constants')
+const { rewardAmount, botName } = require('./constants')
 
 const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
+const commandRegex = new RegExp(`@${botName} (\\w+)(\\s+(\\w+))*`, 'i')
 
 const octokit = new Octokit({
   auth: `token ${process.env.GITHUB_KEY}`
 })
 
 router.post('/gh_webhooks', (req, _res) => {
-  console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`)
+  console.debug('Got Webhook', req.body)
+  console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`, req.body)
 
   switch (req.body.action) {
+    case 'created':
+      if ('comment' in req.body) {
+        createdComment(req.body)
+      }
+      break
     case 'opened':
       openedIssue(req.body)
       break
@@ -71,7 +78,7 @@ const createNoAddressComment = async body => {
     owner: body.repository.owner.login,
     repo: body.repository.name,
     full_repo_name: body.repository.full_name,
-    number: body.pull_request.number,
+    number: body.issue.number,
     body: l18nComment('noAddressComment', body)
   }
   createComment(comment)
@@ -82,25 +89,58 @@ const createRewardableComment = async (body, address) => {
     owner: body.repository.owner.login,
     repo: body.repository.name,
     full_repo_name: body.repository.full_name,
-    number: body.pull_request.number,
+    number: body.issue.number,
     body: l18nComment('thankyou', body, address)
   }
   createComment(comment)
 }
 
-const postReward = async body => {
-  console.log('posting reward', body.pull_request.number)
+const createUnrecognizedCommandComment = async (body, command) => {
+  const comment = {
+    owner: body.repository.owner.login,
+    repo: body.repository.name,
+    full_repo_name: body.repository.full_name,
+    number: body.issue.number,
+    body: l18nComment('unrecognized', body, command)
+  }
+  createComment(comment)
+}
 
+const postReward = async body => {
   // TODO: determine if it was actually approved and merged
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
+    // TODO: Load payee from firebase
     reward(match[1], rewardAmount)
   }
 }
 
-const openedIssue = async body => {
-  console.log('posting comment on opened issue', body.pull_request.number)
+const createdComment = async body => {
+  console.log('createdComment', body)
+  const match = (body.comment.body || '').match(commandRegex)
 
+  console.log('match', match)
+
+  if (match) {
+    switch (match[1]) {
+      case 'pay':
+        // TODO: Save payee address to firebase
+        console.log('setting payee to', match[3])
+        break
+      case 'update':
+        // TODO: poll for address in description / bio
+        break
+      case '🏴‍☠️':
+        // TODO: save language preference to firebase
+        break
+      default:
+        createUnrecognizedCommandComment(body, match[1])
+        break
+    }
+  }
+}
+
+const openedIssue = async body => {
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
     createRewardableComment(body, match[1])
@@ -110,8 +150,6 @@ const openedIssue = async body => {
 }
 
 const closedIssue = async body => {
-  console.log('posting comment on closed issue', body.pull_request.number)
-
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
     postReward(body, match[1])
@@ -121,8 +159,6 @@ const closedIssue = async body => {
 }
 
 const editedIssue = async body => {
-  console.log('issue edited, seeing if a bounty address was added...', body.pull_request.number)
-
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
     createRewardableComment(body, match[1])

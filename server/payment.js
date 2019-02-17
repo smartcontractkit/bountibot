@@ -42,7 +42,6 @@ const authenticateToChainlink = async () => {
 const paymentJobSpec = {
   initiators: [{ type: 'web' }],
   tasks: [
-    { type: 'ethbytesraw' },
     {
       type: 'ethtx',
       confirmations: 0,

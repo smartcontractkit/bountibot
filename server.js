@@ -25,9 +25,9 @@ app.prepare().then(() => {
   server.use(bodyParser.json())
   server.use(
     session({
-      secret: 'thar be bounti here, yaarr',
+      secret: process.env.BB_SESSION_SECRET,
       saveUninitialized: true,
-      store: new FileStore({ path: '/tmp/sessions', secret: 'thar be bounti here, yaarr' }),
+      store: new FileStore({ path: '/tmp/sessions', secret: process.env.BB_SESSION_SECRET }),
       resave: false,
       rolling: true,
       httpOnly: true,

@@ -6,7 +6,7 @@ import githubUserId from '../src/githubUserId'
 
 const payments = (prs, user) => {
   const userId = githubUserId(user)
-  return prs.filter(pr => pr.userID === userId)
+  return prs.filter(pr => pr.userID === userId && pr.paidTo)
 }
 
 const MyPrs = class extends React.Component {

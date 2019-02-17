@@ -110,17 +110,12 @@ const createUnrecognizedCommandComment = (pr, state, command) => {
 }
 
 const createRewardedComment = (pr, state) => {
-  const { sender } = pr
-  return createComment(pr, state, ['paid', sender])
+  const { sender, payee } = pr
+  return createComment(pr, state, ['paid', sender, payee])
 }
 
 const createRewardClaimedCommnt = (pr, state) => {
   return createComment(pr, state, ['claimed'])
-}
-
-const postReward = async (pr, payee) => {
-  // TODO: determine if it was actually approved and merged
-  return 
 }
 
 const pullRequest = body => {

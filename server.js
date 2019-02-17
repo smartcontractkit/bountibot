@@ -63,6 +63,20 @@ app.prepare().then(() => {
     res.json(reply)
   })
 
+  server.get('/prs', async (_, res) => {
+    const snapshot = await storage
+      .collection('bountibotState')
+      .doc('smartcontractkit')
+      .collection('bountibot')
+      .get()
+
+    const prs = []
+    snapshot.forEach(j => {
+      prs.push(j.data())
+    })
+    res.json({ prs })
+  })
+
   // catch all sends to nextjs
   server
     .get('*', (req, res) => {

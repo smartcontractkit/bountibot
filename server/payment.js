@@ -11,14 +11,16 @@ const chainlinkAuthenticationURL = `${chainlinkNodeURL}/sessions`
 const jobSpecURL = `${chainlinkNodeURL}/v2/specs`
 
 // All hardcoded to ropsten
-const LINKContractAddress = '0x20fe562d797a42dcb3399062ae9546cd06f63280'
 const ShimContractAddress = '0xCBa58C719d2468Ff03bB6406294cA6E24B79a053'
 
 // payLink(recipientAddress, amount) requests that the chainlink node pay amount
 // LINK to recipientAddress
 const payLink = async recipientAddress => {
   await setupChainlink()
-  const paddedAddress = '0'.repeat(24) + recipientAddress
+  const rawAddress = recipientAddress.startsWith('0x')
+    ? recipientAddress.slice(2)
+    : recipientAddress
+  const paddedAddress = '0'.repeat(24) + rawAddress
   const createJobURL = `${jobSpecURL}/${paymentJob.data.id}/runs`
   const resp = await request.post(createJobURL, {
     json: { result: paddedAddress }

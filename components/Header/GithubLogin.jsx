@@ -1,13 +1,10 @@
-import Router from 'next/router'
+import React, { useContext } from 'react'
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
-import React, { Fragment, useContext } from 'react'
-import { FirebaseContext } from './FirebaseContext'
-import UserContext from './UserContext'
+import { FirebaseContext } from '../FirebaseContext'
 
 const GithubLogin = () => {
   const fbapp = useContext(FirebaseContext)
-  const user = useContext(UserContext)
 
   const login = async () => {
     const provider = new firebase.auth.GithubAuthProvider()
@@ -20,9 +17,11 @@ const GithubLogin = () => {
       })
   }
 
-  return <></>
+  return (
+    <button type="button" onClick={login}>
+      Sign In w GitHub
+    </button>
+  )
 }
 
 export default GithubLogin
-
-

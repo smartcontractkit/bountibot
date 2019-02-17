@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useEffect, useContext } from 'react'
 import { withStyles } from '@material-ui/core/styles'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import NavLink from './NavLink'
+import GithubLogin from './GithubLogin'
 
 const styles = _theme => {
   return {
@@ -33,7 +34,7 @@ const AuthenticatedNavItems = () => {
 const UnauthenticatedNavItems = () => {
   return (
     <Item>
-      <NavLink href="/login">Login</NavLink>
+      <GithubLogin />
     </Item>
   )
 }

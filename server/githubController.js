@@ -37,7 +37,7 @@ router.post('/gh_webhooks', (req, _res) => {
   }
 })
 
-const createComment = async (fullRepoName, owner, sender, issueNumber, body) => {
+const createComment = async ({fullRepoName, owner, sender, issueNumber}, body) => {
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
@@ -55,6 +55,7 @@ const createComment = async (fullRepoName, owner, sender, issueNumber, body) => 
         const newGHComment = _.assign({}, ghComment, { comment_id: doc.data().comment_id })
         console.debug('Comment already exists on PR, updating', newGHComment)
         octokit.issues.updateComment(newGHComment)
+          .catch(err => console.error(`Error updating PR comment from GH: ${err}`))
         return
       }
 
@@ -73,15 +74,15 @@ const createComment = async (fullRepoName, owner, sender, issueNumber, body) => 
     .catch(err => console.error(`Error obtaining existing PR comment from FB: ${err}`))
 }
 
-const createNoAddressComment = async (fullRepoName, owner, sender, issueNumber, body) => {
+const createNoAddressComment = async ({fullRepoName, owner, sender, issueNumber}, body) => {
   createComment(fullRepoName, owner, sender, issueNumber, l18nComment('noAddressComment', fullRepoName))
 }
 
-const createRewardableComment = async (fullRepoName, owner, sender, issueNumber, body, address) => {
+const createRewardableComment = async ({fullRepoName, owner, sender, issueNumber}, body, address) => {
   createComment(fullRepoName, owner, sender, issueNumber, l18nComment('thankyou', owner, address))
 }
 
-const createUnrecognizedCommandComment = async (fullRepoName, owner, sender, issueNumber, body, command) => {
+const createUnrecognizedCommandComment = async ({fullRepoName, owner, sender, issueNumber}, body, command) => {
   createComment(fullRepoName, owner, sender, issueNumber, l18nComment('unrecognized', command))
 }
 
@@ -94,7 +95,7 @@ const postReward = async body => {
   }
 }
 
-const setPayee = async (fullRepoName, owner, sender, issueNumber, payee) => {
+const setPayee = async ({fullRepoName, owner, sender, issueNumber}, payee) => {
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
@@ -107,6 +108,14 @@ const setPayee = async (fullRepoName, owner, sender, issueNumber, payee) => {
     .set({ payee })
     .catch(err => console.error(`Error setting payee via FB: ${err}`))
     .then(() => createRewardableComment(fullRepoName, owner, sender, issueNumber, payee))
+}
+
+const getPayee = async (pr, pullRequestDescription) => {
+  // TODO: First look against the FB record, then the pull request description, then the sender's bio
+  const match = (pullRequestDescription || '').match(addressRegex)
+  if (match && match[1] != '') {
+    return match[1]
+  }
 }
 
 const createdComment = async body => {
@@ -128,36 +137,51 @@ const createdComment = async body => {
         // TODO: save language preference to firebase
         break
       default:
-        createUnrecognizedCommandComment(body, match[1])
+        createUnrecognizedCommandComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.issue.number, match[1])
         break
     }
   }
 }
 
+const pullRequest = async body = {
+  return {
+    fullName: body.repository.full_name,
+    owner: body.repository.owner.login,
+    sender: body.sender.login,
+    number: body.pull_request.numberr,
+  }
+}
+
 const openedIssue = async body => {
-  const match = (body.pull_request.body || '').match(addressRegex)
-  if (match) {
-    createRewardableComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number, match[1])
+  const pr = pullRequest(body)
+  const payee = getPayee(pr, body.pull_request.body)
+
+  if (payee) {
+    createRewardableComment(pr, payee)
   } else {
-    createNoAddressComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number)
+    createNoAddressComment(pr)
   }
 }
 
 const closedIssue = async body => {
-  const match = (body.pull_request.body || '').match(addressRegex)
-  if (match) {
-    postReward(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number, match[1])
+  const pr = pullRequest(body)
+  const payee = getPayee(pr, body.pull_request.body)
+
+  if (payee) {
+    postReward(pr, match[1])
   } else {
-    createNoAddressComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number)
+    createNoAddressComment(pr)
   }
 }
 
 const editedIssue = async body => {
-  const match = (body.pull_request.body || '').match(addressRegex)
-  if (match) {
-    createRewardableComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number, match[1])
+  const pr = pullRequest(body)
+  const payee = getPayee(pr, body.pull_request.body)
+
+  if (payee) {
+    createRewardableComment(pr, match[1])
   } else {
-    createNoAddressComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number)
+    createNoAddressComment(pr)
   }
 }
 

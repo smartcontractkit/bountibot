@@ -10,34 +10,47 @@ const styles = _theme => {
       display: 'flex',
       flexDirection: 'row',
       padding: 0
+    },
+    navItem: {
+      width: 'auto'
     }
   }
 }
 
-const Admin = () => {
+const Item = ({ children, classes }) => {
+  return (
+    <ListItem className={classes.navItem}>
+      {children}
+    </ListItem>
+  )
+}
+
+const Admin = props => {
   return (
     <>
-      <ListItem>
+      <Item {...props}>
         <NavLink href="/admin">Admin</NavLink>
-      </ListItem>
-      <ListItem>
+      </Item>
+      <Item {...props}>
         <NavLink href="/admin/prs">PRs</NavLink>
-      </ListItem>
+      </Item>
     </>
   )
 }
 
 const User = () => <></>
 
-const Authenticated = ({ user }) => user.admin ? <Admin /> : <User />
+const Authenticated = props => props.user.admin ? <Admin {...props} /> : <User {...props} />
 
-const NavItems = ({ classes, user }) => {
+const NavItems = props => {
+  const { classes, user } = props
+
   return (
     <List className={classes.navList}>
-      <ListItem>
+      <Item {...props}>
         <NavLink href="/">Home</NavLink>
-      </ListItem>
-      {user && <Authenticated user={user} />}
+      </Item>
+      {user && <Authenticated {...props} />}
     </List>
   )
 }

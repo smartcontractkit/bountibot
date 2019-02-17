@@ -14,19 +14,27 @@ const styles = _theme => {
   }
 }
 
+const Item = ({ children }) => {
+  return (
+    <ListItem style={{ 'justify-content': 'flex-end' }}>
+      {children}
+    </ListItem>
+  )
+}
+
 const AuthenticatedNavItems = () => {
   return (
-    <ListItem>
+    <Item>
       <NavLink href="/logout">Logout</NavLink>
-    </ListItem>
+    </Item>
   )
 }
 
 const UnauthenticatedNavItems = () => {
   return (
-    <ListItem>
+    <Item>
       <NavLink href="/login">Login</NavLink>
-    </ListItem>
+    </Item>
   )
 }
 

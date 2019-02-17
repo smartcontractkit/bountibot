@@ -21,7 +21,7 @@ const isAuthorized = (user, router) => {
     return true
   }
 
-  return !user.admin && router.pathname.match(/^\/admin/)
+  return !user.admin && !router.pathname.match(/^\/admin/)
 }
 
 class MyApp extends App {

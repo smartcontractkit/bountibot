@@ -17,7 +17,7 @@ const styles = _theme => {
 
 const Item = ({ children }) => {
   return (
-    <ListItem style={{ 'justify-content': 'flex-end' }}>
+    <ListItem style={{ justifyContent: 'flex-end' }}>
       {children}
     </ListItem>
   )

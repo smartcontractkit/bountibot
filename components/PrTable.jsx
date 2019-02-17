@@ -9,6 +9,14 @@ import Typography from '@material-ui/core/Typography'
 import Author from './PrTable/Author'
 import Pr from './PrTable/Pr'
 
+const status = pr => {
+  if (pr.paidTo) {
+    return 'paid'
+  }
+
+  return 'open'
+}
+
 const RenderRows = ({ prs }) => {
   return prs.map(pr => (
     <TableRow key={pr.id}>
@@ -16,7 +24,7 @@ const RenderRows = ({ prs }) => {
         <Pr>{pr.id}</Pr>
       </TableCell>
       <TableCell>{pr.title}</TableCell>
-      <TableCell>{pr.status}</TableCell>
+      <TableCell>{status(pr)}</TableCell>
       <TableCell>
         <Author>
           {pr.author}

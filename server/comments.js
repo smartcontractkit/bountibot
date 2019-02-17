@@ -2,17 +2,17 @@ const { rewardAmount, botName, lang } = require('./constants')
 
 const comments = {
   en: {
-    noAddressComment: body =>
+    noAddressComment: fullRepoName =>
       `Greetings, my name is ${botName} 🤖.
     
-We are offering rewards of ${rewardAmount} ${l18nComment('currency')} for contributions to ${body.repository.name}.
+We are offering rewards of ${rewardAmount} ${l18nComment('currency')} for contributions to ${fullRepoName}.
 
 If you add a ${l18nComment('currency')} address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} ${l18nComment('currency')} when this PR is accepted!
 
 ${l18nComment('commandsAndOptionsText')}`,
-    thankyou: (body, address) =>
+    thankyou: (owner, address) =>
       `Thanks for adding your Ethereum address ${
-        body.repository.owner.login
+        owner
       }! When this PR is approved and merged we will be sending ${rewardAmount} ${l18nComment('currency')} to ${address}.`,
     commandsAndOptionsText: () => `---
 
@@ -28,12 +28,12 @@ Finally, you can contact us by mentioning @${botName}.
 
 </details>`,
     currency: () => `LINK`,
-    unrecognized: (body, command) => `The command ${command} is not recognized.`
+    unrecognized: command => `The command ${command} is not recognized.`
   },
   sp: {
-    noAddressComment: body => `Aloha! Yo soy ${botName} 🤖.
+    noAddressComment: fullRepoName => `Aloha! Yo soy ${botName} 🤖.
     
-Estamos ofreciendo ${rewardAmount} para contribuciones a ${body.repository.name}.
+Estamos ofreciendo ${rewardAmount} para contribuciones a ${fullRepoName}.
 
 Si agrega una dirección de ${l18nComment('currency')} a su descripción de Github Bio o PR, así: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. ¡Te enviaremos ${rewardAmount} ${l18nComment('currency')} cuando se acepte este PR
 

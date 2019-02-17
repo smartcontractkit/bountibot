@@ -37,13 +37,13 @@ router.post('/gh_webhooks', (req, _res) => {
   }
 })
 
-const createComment = async comment => {
-  const collection = storage.collection('pull_request_comments')
+const createComment = async (fullRepoName, owner, sender, issueNumber, body) => {
+  const collection = storage.collection('bountibotState')
 
-  const key = `${comment.full_repo_name}/${comment.owner}.${comment.number}`
+  const key = `${fullRepoName}/${sender}.${issueNumber}`
   console.debug(`Looking for key ${key}`)
 
-  const ghComment = _.pick(comment, ['owner', 'repo', 'number', 'body'])
+  const ghComment = { owner, repo: owner, number: issueNumber, body }
   console.debug('posting GH comment', ghComment)
 
   // Check storage to see if we already commented
@@ -65,7 +65,7 @@ const createComment = async comment => {
           // Record that we commented
           collection
             .doc(key)
-            .set(_.assign({}, ghComment, { comment_id: response.data.id }))
+            .set({ comment_id: response.data.id })
             .catch(err => console.error(`Error setting PR comment from FB: ${err}`))
         })
         .catch(err => console.error(`Error creating PR comment from GH: ${err}`))
@@ -73,37 +73,16 @@ const createComment = async comment => {
     .catch(err => console.error(`Error obtaining existing PR comment from FB: ${err}`))
 }
 
-const createNoAddressComment = async body => {
-  const comment = {
-    owner: body.repository.owner.login,
-    repo: body.repository.name,
-    full_repo_name: body.repository.full_name,
-    number: body.issue.number,
-    body: l18nComment('noAddressComment', body)
-  }
-  createComment(comment)
+const createNoAddressComment = async (fullRepoName, owner, sender, issueNumber, body) => {
+  createComment(fullRepoName, owner, sender, issueNumber, l18nComment('noAddressComment', fullRepoName))
 }
 
-const createRewardableComment = async (body, address) => {
-  const comment = {
-    owner: body.repository.owner.login,
-    repo: body.repository.name,
-    full_repo_name: body.repository.full_name,
-    number: body.issue.number,
-    body: l18nComment('thankyou', body, address)
-  }
-  createComment(comment)
+const createRewardableComment = async (fullRepoName, owner, sender, issueNumber, body, address) => {
+  createComment(fullRepoName, owner, sender, issueNumber, l18nComment('thankyou', owner, address))
 }
 
-const createUnrecognizedCommandComment = async (body, command) => {
-  const comment = {
-    owner: body.repository.owner.login,
-    repo: body.repository.name,
-    full_repo_name: body.repository.full_name,
-    number: body.issue.number,
-    body: l18nComment('unrecognized', body, command)
-  }
-  createComment(comment)
+const createUnrecognizedCommandComment = async (fullRepoName, owner, sender, issueNumber, body, command) => {
+  createComment(fullRepoName, owner, sender, issueNumber, l18nComment('unrecognized', command))
 }
 
 const postReward = async body => {
@@ -113,6 +92,21 @@ const postReward = async body => {
     // TODO: Load payee from firebase
     reward(match[1], rewardAmount)
   }
+}
+
+const setPayee = async (fullRepoName, owner, sender, issueNumber, payee) => {
+  const collection = storage.collection('bountibotState')
+
+  const key = `${fullRepoName}/${sender}.${issueNumber}`
+  console.debug(`Looking for key ${key}`)
+
+  console.log('setting payee to', payee)
+
+  collection
+    .doc(key)
+    .set({ payee })
+    .catch(err => console.error(`Error setting payee via FB: ${err}`))
+    .then(() => createRewardableComment(fullRepoName, owner, sender, issueNumber, payee))
 }
 
 const createdComment = async body => {
@@ -125,7 +119,7 @@ const createdComment = async body => {
     switch (match[1]) {
       case 'pay':
         // TODO: Save payee address to firebase
-        console.log('setting payee to', match[3])
+        setPayee(body.repository.full_name, body.repository.owner.login, body.sender.login, body.issue.number, match[3])
         break
       case 'update':
         // TODO: poll for address in description / bio
@@ -143,27 +137,27 @@ const createdComment = async body => {
 const openedIssue = async body => {
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
-    createRewardableComment(body, match[1])
+    createRewardableComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number, match[1])
   } else {
-    createNoAddressComment(body)
+    createNoAddressComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number)
   }
 }
 
 const closedIssue = async body => {
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
-    postReward(body, match[1])
+    postReward(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number, match[1])
   } else {
-    createNoAddressComment(body)
+    createNoAddressComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number)
   }
 }
 
 const editedIssue = async body => {
   const match = (body.pull_request.body || '').match(addressRegex)
   if (match) {
-    createRewardableComment(body, match[1])
+    createRewardableComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number, match[1])
   } else {
-    createNoAddressComment(body)
+    createNoAddressComment(body.repository.full_name, body.repository.owner.login, body.sender.login, body.pull_request.number)
   }
 }
 

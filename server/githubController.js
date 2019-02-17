@@ -124,11 +124,6 @@ const postReward = async (pr, payee) => {
   return 
 }
 
-const setLanguage = async (pr, language) => {
-  console.log('setting language to', language)
-  setPRState(pr, { language })
-}
-
 const pullRequest = body => {
   return {
     fullRepoName: body.repository.full_name,
@@ -163,12 +158,12 @@ const updatedComment = async body => {
             createRewardableComment(pr, state, payee)
               .then(() => setPRState(pr, _.assign({}, state, { payee })))
           } else {
-            createComment(pr, ['missingPayAddress'])
+            createComment(pr, state, ['missingPayAddress'])
           }
           break
         case 'lang':
           const language = match[3]
-          setPRState(pr, _.assign({}, state, { language }))
+          createComment(pr, state, ['language']).then(() => setPRState(pr, _.assign({}, state, { language })))
           break
         default:
           createUnrecognizedCommandComment(pr, state, match[1])

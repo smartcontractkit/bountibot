@@ -1,4 +1,4 @@
-const { rewardAmount, botName, defaultLang } = require('./constants')
+const { rewardAmount, botName, defaultLang, etherscanURL } = require('./constants')
 
 const comments = {
   en: {
@@ -30,7 +30,7 @@ Finally, you can contact us by mentioning @${botName}.
     currency: () => `LINK`,
     unrecognized: command => `The command ${command} is not recognized.`,
     missingPayAddress: () => `\`@${botName} pay\` requires a valid EIP155 address argument`,
-    paid: (lang, sender, address) => `Check your [account](https://bountibot-staging.appspot.com/my_payments) @${sender} you should have received <a href="https://etherscan.io/address/${address}">${rewardAmount} ${l18nComment(lang, 'currency')}</a>! 💰💰💰`,
+    paid: (lang, sender, address) => `Check your [account](https://bountibot-staging.appspot.com/my_payments) @${sender} you should have received <a href="${etherscanURL}address/${address}">${rewardAmount} ${l18nComment(lang, 'currency')}</a>! 💰💰💰`,
     claimed: () => `🔺 The reward for this pull request has already been claimed. 🔺`,
     language: () => 'Future responses will be in english.',
   },

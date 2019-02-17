@@ -31,7 +31,8 @@ Finally, you can contact us by mentioning @${botName}.
     unrecognized: command => `The command ${command} is not recognized.`,
     missingPayAddress: () => `\`@${botName} pay\` requires a valid EIP155 address argument`,
     paid: (lang, sender) => `Check your account @${sender} you should have received ${rewardAmount} ${l18nComment(lang, 'currency')}! 💰💰💰`,
-    claimed: () => `🔺 The reward for this pull request has already been claimed. 🔺`
+    claimed: () => `🔺 The reward for this pull request has already been claimed. 🔺`,
+    language: () => 'Future responses will be in english.',
   },
   sp: {
     noAddressComment: (lang, fullRepoName) => `Aloha! Yo soy ${botName} 🤖.
@@ -51,9 +52,10 @@ If you add a ${l18nComment(lang, 'currency')} address to your Github Bio or PR d
 
 ${l18nComment(lang, 'commandsAndOptionsText')}`,
     currency: () => 'dubloons',
+    language: () => 'Yarrrrgh',
     thankyou: () => `Aye, I recognize that address sailor. There be treasure awaitin'.`,
     unrecognized: () => `Ach, dat be no cant I'd recognize.`,
-    paid: (lang, sender) => `Ahoy, @${sender}, there be treasure in your future! 💰💰💰`,
+    paid: (lang, sender) => `Ahoy, @${sender}, there be treasure in your future!\n<img src="https://media.giphy.com/media/l0IynKSD9UkNZ88a4/giphy-downsized.gif"/>`,
     claimed: () => `Yarrr, there be no treasure 'ere ☠️`
   }
 }

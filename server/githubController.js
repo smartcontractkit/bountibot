@@ -188,8 +188,10 @@ const openedIssue = async body => {
 
       console.log('Creating rewardable comment', match[1])
       setPRState(pr, _.assign({}, state, { payee: match[1] }))
-        .then(state => createRewardableComment(pr, state))
-        .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+        .then(state => {
+          createRewardableComment(pr, state)
+            .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+        })
       return
     }
 
@@ -213,8 +215,10 @@ const editedIssue = async body => {
       if (state.payee !== match[1]) {
         console.log('Creating rewardable comment', match[1])
         setPRState(pr, _.assign({}, state, { payee: match[1] }))
-          .then(state => console.log('state', state) || createRewardableComment(pr, state))
-          .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+          .then(state => {
+            createRewardableComment(pr, state)
+              .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+          })
         return
       }
     }

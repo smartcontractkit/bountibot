@@ -11,7 +11,7 @@ If you add a ${l18nComment(lang, 'currency')} address to your Github Bio or PR d
 
 ${l18nComment(lang, 'commandsAndOptionsText')}`,
     thankyou: (lang, sender, address) =>
-      `Thanks for adding your Ethereum address ${
+      `Thanks for adding your Ethereum address @${
         sender
       }! When this PR is approved and merged we will be sending ${rewardAmount} ${l18nComment(lang, 'currency')} to ${address}.`,
     commandsAndOptionsText: () => `---

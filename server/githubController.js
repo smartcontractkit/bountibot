@@ -237,6 +237,7 @@ const closedIssue = async body => {
   const pr = pullRequest(body)
   getPRState(pr).then(state => {
     console.log('closedIssue', pr, state)
+    console.log('body', body)
 
     if (isBlank(state.payee)) {
       console.warn('PR was closed without ever setting payee')

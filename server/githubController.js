@@ -9,13 +9,27 @@ const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
 const commandRegex = new RegExp(`@${botName} (\\w+)(\\s+(\\w+))*`, 'i')
 
+// TODO: would be nice to use GH app instead of my account
+const self = 'j16r'
+
 const octokit = new Octokit({
   auth: `token ${process.env.GITHUB_KEY}`
 })
 
+const isBlank = value => {
+  return (_.isEmpty(value) && !_.isNumber(value) || _.isNaN(value))
+}
+
+const isPresent = value => {
+  return !isBlank(value)
+}
+
 router.post('/gh_webhooks', (req, _res) => {
-  console.debug('Got Webhook', req.body)
-  console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}.`, req.body)
+  console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}, sender: ${req.body.sender.login}.`)
+
+  if (req.body.sender.login === self) {
+    return
+  }
 
   switch (req.body.action) {
     case 'created':
@@ -24,26 +38,31 @@ router.post('/gh_webhooks', (req, _res) => {
       }
       break
     case 'opened':
-      openedIssue(req.body)
+      if ('pull_request' in req.body) {
+        openedIssue(req.body)
+      }
       break
     case 'closed':
-      closedIssue(req.body)
+      if ('pull_request' in req.body) {
+        closedIssue(req.body)
+      }
       break
     case 'edited':
-      editedIssue(req.body)
+      if ('issue' in req.body) {
+        editedIssue(req.body)
+      }
       break
     default:
       break
   }
 })
 
-const createComment = async ({ fullRepoName, owner, sender, issueNumber }, body) => {
+const createComment = async ({ fullRepoName, repository, owner, sender, issueNumber }, body) => {
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
-  console.debug(`Looking for key ${key}`)
 
-  const ghComment = { owner, repo: owner, number: issueNumber, body }
+  const ghComment = { owner, repo: repository, number: issueNumber, body }
   console.debug('posting GH comment', ghComment)
 
   // Check storage to see if we already commented
@@ -90,7 +109,7 @@ const createUnrecognizedCommandComment = async (pr, body, command) => {
 
 const postReward = async body => {
   // TODO: determine if it was actually approved and merged
-  const match = (body.pull_request.body || '').match(addressRegex)
+  const match = ((body.pull_request || body.issue).body || '').match(addressRegex)
   if (match) {
     // TODO: Load payee from firebase
     reward(match[1], rewardAmount)
@@ -101,7 +120,6 @@ const setPayee = async ({ fullRepoName, owner, sender, issueNumber }, payee) => 
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
-  console.debug(`Looking for key ${key}`)
 
   console.log('setting payee to', payee)
 
@@ -116,18 +134,19 @@ const getPayee = async ({ fullRepoName, sender, issueNumber }, pullRequestDescri
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
-  console.debug(`Looking for key ${key}`)
 
-  collection
+  return collection
     .doc(key)
     .get()
     .then(doc => {
-      if (doc.exists && !_.isBlank(doc.data().payee)) {
+      if (doc.exists && isPresent(doc.data().payee)) {
+        console.log('Payee was set by PR creator', doc.data().payee)
         return doc.data().payee
       }
 
       const match = (pullRequestDescription || '').match(addressRegex)
-      if (match && !_.isBlank(match[1])) {
+      if (match && isPresent(match[1])) {
+        console.log('Payee was found in PR description', match[1])
         return match[1]
       }
     })
@@ -136,24 +155,29 @@ const getPayee = async ({ fullRepoName, sender, issueNumber }, pullRequestDescri
 
 const pullRequest = body => {
   return {
-    fullName: body.repository.full_name,
+    fullRepoName: body.repository.full_name,
+    repository: body.repository.name,
     owner: body.repository.owner.login,
     sender: body.sender.login,
-    number: body.pull_request.number
+    issueNumber: (body.pull_request || body.issue).number
   }
 }
 
 const createdComment = async body => {
   const pr = pullRequest(body)
-  console.log('createdComment', body)
+  console.log('createdComment', pr)
 
   const match = (body.comment.body || '').match(commandRegex)
-  console.log('match', match)
   if (match) {
+    console.log('body.comment.body', body.comment.body)
+    console.log('match', match)
     switch (match[1]) {
       case 'pay':
-        // TODO: Save payee address to firebase
-        setPayee(pr, match[3])
+        if (isPresent(match[3])) {
+          setPayee(pr, match[3])
+        } else {
+          createComment(pr, l18nComment('missingPayAddress'))
+        }
         break
       case 'update':
         // TODO: poll for address in description / bio
@@ -165,13 +189,15 @@ const createdComment = async body => {
         createUnrecognizedCommandComment(pr, match[1])
         break
     }
+  } else {
+    createNoAddressComment(pr)
   }
 }
 
 const openedIssue = async body => {
   const pr = pullRequest(body)
   console.log('openedIssue', pr)
-  const payee = getPayee(pr, body.pull_request.body)
+  const payee = await getPayee(pr, (body.issue || body.pull_request).body)
 
   if (payee) {
     createRewardableComment(pr, payee)
@@ -183,7 +209,8 @@ const openedIssue = async body => {
 const closedIssue = async body => {
   const pr = pullRequest(body)
   console.log('closedIssue', pr)
-  const payee = getPayee(pr, body.pull_request.body)
+  const payee = await getPayee(pr, (body.issue || body.pull_request).body)
+  console.log('payee', payee)
 
   if (payee) {
     postReward(pr, payee)
@@ -195,7 +222,7 @@ const closedIssue = async body => {
 const editedIssue = async body => {
   const pr = pullRequest(body)
   console.log('editedIssue', pr)
-  const payee = getPayee(pr, body.pull_request.body)
+  const payee = await getPayee(pr, (body.issue || body.pull_request).body)
 
   if (payee) {
     createRewardableComment(pr, payee)

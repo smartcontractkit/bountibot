@@ -21,14 +21,14 @@ ${l18nComment('commandsAndOptionsText')}`,
 <br />
 
 You can trigger ${botName} actions by commenting on this PR:
-- \`@${botName} update\` look for the bounty address again
-- \`@${botName} 🏴‍☠️\` respond to further actions in pirate mode
+- \`@${botName} pay <address>\` set the address to receive a bounty for this PR
 
 Finally, you can contact us by mentioning @${botName}.
 
 </details>`,
     currency: () => `LINK`,
-    unrecognized: command => `The command ${command} is not recognized.`
+    unrecognized: command => `The command ${command} is not recognized.`,
+    missingPayAddress: () => `\`@${botName} pay\` requires a valid EIP155 address argument`
   },
   sp: {
     noAddressComment: fullRepoName => `Aloha! Yo soy ${botName} 🤖.

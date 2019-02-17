@@ -5,7 +5,7 @@ const Tx = ({ children }) => {
   if (children) {
     const short = `${children.slice(0, 6)}...`
     return (
-      <Link href={`https://etherscan.io/address/${children}`}>
+      <Link href={`https://ropsten.etherscan.io/address/${children}`}>
         {short}
       </Link>
     )

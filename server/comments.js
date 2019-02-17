@@ -40,7 +40,8 @@ Estamos ofreciendo ${rewardAmount} para contribuciones a ${fullRepoName}.
 
 Si agrega una dirección de ${l18nComment(lang, 'currency')} a su descripción de Github Bio o PR, así: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. ¡Te enviaremos ${rewardAmount} ${l18nComment(lang, 'currency')} cuando se acepte este PR
 
-${l18nComment(lang, 'commandsAndOptionsText')}`
+${l18nComment(lang, 'commandsAndOptionsText')}`,
+    thankyou: () => `Gracias`
   },
   '🏴‍☠️': {
     noAddressComment: (lang) => `Yaaaargh! I'm ${botName} ⛵️

@@ -22,7 +22,7 @@ ${l18nComment(lang, 'commandsAndOptionsText')}`,
 
 You can trigger ${botName} actions by commenting on this PR:
 - \`@${botName} pay <address>\` set the address to receive a bounty for this PR
-- \`@${botName} lang <language>\` set the preferred language for ${botName} (en, sa, pirate)
+- \`@${botName} lang <language>\` set the preferred language for ${botName} (en, sa)
 
 Finally, you can contact us by mentioning @${botName}.
 
@@ -42,7 +42,7 @@ Si agrega una dirección de ${l18nComment(lang, 'currency')} a su descripción d
 
 ${l18nComment(lang, 'commandsAndOptionsText')}`
   },
-  pirate: {
+  '🏴‍☠️': {
     noAddressComment: (lang) => `Yaaaargh! I'm ${botName} ⛵️
     
 We are offering booty to the value of ${rewardAmount} ${l18nComment(lang, 'currency')} for contributions to this scurvy repository.
@@ -53,14 +53,15 @@ ${l18nComment(lang, 'commandsAndOptionsText')}`,
     currency: () => 'dubloons',
     thankyou: () => `Aye, I recognize that address sailor. There be treasure awaitin'.`,
     unrecognized: () => `Ach, dat be no cant I'd recognize.`,
-    paid: (lang, sender) => `Ahoy, @{sender}, there be treasure in your future! 💰💰💰`,
+    paid: (lang, sender) => `Ahoy, @${sender}, there be treasure in your future! 💰💰💰`,
     claimed: () => `Yarrr, there be no treasure 'ere ☠️`
   }
 }
 
 const l18nComment = (lang, key, ...args) => {
-  const useLang = lang || defaultLang
+  let useLang = lang || defaultLang
   let comment = comments[useLang][key]
+  console.log('lang', useLang, 'comment', comment)
   if (comment == null) {
     console.debug(`No comment for language '${useLang}' falling back to en for '${key}'`)
     comment = comments.en[key]

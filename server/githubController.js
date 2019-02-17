@@ -3,11 +3,11 @@ const express = require('express')
 const _ = require('lodash')
 const { storage } = require('./firebase')
 const { l18nComment } = require('./comments')
-const { rewardAmount, botName } = require('./constants')
+const { botName } = require('./constants')
 
 const router = express.Router()
 const addressRegex = new RegExp(/\[bounty: (0x[a-f0-9]+)\]/, 'i')
-const commandRegex = new RegExp(`@${botName} (\\w+)(\\s+(\\w+))*`, 'i')
+const commandRegex = new RegExp(`@${botName} (\\w+)(\\s+([^\\s]+))*`, 'i')
 
 // TODO: would be nice to use GH app instead of my account
 const self = 'dimroc'
@@ -75,36 +75,21 @@ const getPRState = pr => {
   return collection
     .doc(prStateKey(pr))
     .get()
-    //.then(doc => {
-      //if (doc.exists && isPresent(doc.data().payee)) {
-        //console.log('Payee was set by PR creator', doc.data().payee)
-        //return doc.data().payee
-      //}
-
-      //const match = pr.description.match(addressRegex)
-      //if (match && isPresent(match[1])) {
-        //console.log('Payee was found in PR description', match[1])
-        //return match[1]
-      //}
-
-      //return null
-    //})
-    //.catch(err => console.error(`Error obtaining PR state via FB: ${err}`))
+    .then(doc => doc.exists && doc.data() || {})
 }
 
 const setPRState = (pr, data) => {
   return collection
     .doc(prStateKey(pr))
     .set(data)
-    //.catch(err => console.error(`Error setting PR state via FB: ${err}`))
 }
 
-const createComment = ({ repositoryOwner, repository, issueNumber }, { lang }, comment) => {
+const createComment = ({ repositoryOwner, repository, issueNumber }, { language }, comment) => {
   const ghComment = {
     owner: repositoryOwner,
     repo: repository,
     number: issueNumber,
-    body: l18nComment(lang, ...comment)
+    body: l18nComment(language, ...comment)
   }
 
   console.debug('Posting GH comment', ghComment)
@@ -141,7 +126,7 @@ const postReward = async (pr, payee) => {
 
 const setLanguage = async (pr, language) => {
   console.log('setting language to', language)
-  eetPRState(pr, { language })
+  setPRState(pr, { language })
 }
 
 const setPayee = async (pr, payee) => {
@@ -171,61 +156,80 @@ const updatedComment = async body => {
 
   console.debug(`Authorized command from PR owner (${pr.issueOwner} != ${body.sender.login})`)
 
-  getPRState(pr)
-    .then(doc => {
-      let state = doc.data()
-
-      const match = (body.comment.body || '').match(commandRegex)
-      if (match) {
-        console.log('body.comment.body', body.comment.body)
-        console.log('match', match)
-        switch (match[1]) {
-          case 'pay':
-            if (isPresent(match[3])) {
-              setPayee(pr, match[3])
-            } else {
-              createComment(pr, ['missingPayAddress'])
-            }
-            break
-          case 'update':
-            // TODO: poll for address in description / bio
-            break
-          case '🏴‍☠️':
-            setLanguage(pr, 'pirate')
-            break
-          case 'lang':
-            setLanguage(pr, match[3])
-            break
-          default:
-            createUnrecognizedCommandComment(pr, state, match[1])
-            break
-        }
-      } else {
-        createNoAddressComment(pr)
+  getPRState(pr).then(state => {
+    const match = (body.comment.body || '').match(commandRegex)
+    if (match) {
+      console.log('body.comment.body', body.comment.body)
+      console.log('match', match)
+      switch (match[1]) {
+        case 'pay':
+          if (isPresent(match[3])) {
+            setPayee(pr, match[3])
+          } else {
+            createComment(pr, ['missingPayAddress'])
+          }
+          break
+        case 'update':
+          // TODO: poll for address in description / bio
+          break
+        case '🏴‍☠️':
+          setLanguage(pr, 'pirate')
+          break
+        case 'lang':
+          setLanguage(pr, match[3])
+          break
+        default:
+          createUnrecognizedCommandComment(pr, state, match[1])
+          break
       }
-    })
+    } else {
+      createNoAddressComment(pr)
+    }
+  })
 }
 
 const openedIssue = async body => {
   const pr = pullRequest(body)
-  console.log('openedIssue', pr)
+  getPRState(pr).then(_state => {
+    const state = _.assign({}, _state, {
+      title: body.pull_request.title,
+      id: body.pull_request.number,
+      description: body.pull_request.body,
+      paidTo: null
+    })
 
-  getPRState(pr)
-    .then(doc => {
-      let state = {
-        title: body.pull_request.title,
-        id: body.pull_request.number,
-        description: body.pull_request.body,
-        paidTo: null
-      }
-      if (doc.exists) {
-        state = _.assign({}, state, doc.data())
-      }
+    console.log('openedIssue', pr, state)
 
-      const match = body.pull_request.body.match(addressRegex)
-      if (match && isPresent(match[1])) {
-        console.log('Payee was found in PR description', match[1])
+    const match = body.pull_request.body.match(addressRegex)
+    if (match && isPresent(match[1])) {
+      console.log('Payee was found in PR description', match[1])
 
+      state.payee = match[1]
+
+      console.log('Creating rewardable comment', match[1])
+      createRewardableComment(pr, state, match[1])
+        .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
+      return
+    }
+
+    if (isBlank(state.noAddressCommentID)) {
+      console.log('Creating no address comment')
+      createNoAddressComment(pr, state)
+        .then(response => setPRState(pr, _.assign({}, state, { noAddressCommentID: response.data.id })))
+    }
+  })
+}
+
+const editedIssue = async body => {
+  const pr = pullRequest(body)
+  getPRState(pr).then(state => {
+    console.log('editedIssue', pr, state)
+
+    const match = body.pull_request.body.match(addressRegex)
+    if (match && isPresent(match[1])) {
+      console.log('Payee was found in PR description', match[1])
+
+      if (state.payee !== match[1]) {
         state.payee = match[1]
 
         console.log('Creating rewardable comment', match[1])
@@ -233,63 +237,33 @@ const openedIssue = async body => {
           .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
         return
       }
+    }
 
-      if (isBlank(state.noAddressCommentID)) {
-        console.log('Creating no address comment')
-        createNoAddressComment(pr, state)
-            .then(response => setPRState(pr, _.assign({}, state, { noAddressCommentID: response.data.id })))
-      }
-    })
-}
-
-const editedIssue = async body => {
-  const pr = pullRequest(body)
-  console.log('editedIssue', pr)
-
-  getPRState(pr)
-    .then(doc => {
-      let state = doc.data()
-
-      const match = body.pull_request.body.match(addressRegex)
-      if (match && isPresent(match[1])) {
-        console.log('Payee was found in PR description', match[1])
-
-        if (state.payee !== match[1]) {
-          state.payee = match[1]
-
-          console.log('Creating rewardable comment', match[1])
-          createRewardableComment(pr, state, match[1])
-            .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
-          return
-        }
-      }
-
-      if (isBlank(state.noAddressCommentID)) {
-        console.log('Creating no address comment')
-        createNoAddressComment(pr, state)
-            .then(response => setPRState(pr, _.assign({}, state, { noAddressCommentID: response.data.id })))
-      }
-    })
+    if (isBlank(state.noAddressCommentID)) {
+      console.log('Creating no address comment')
+      createNoAddressComment(pr, state)
+        .then(response => setPRState(pr, _.assign({}, state, { noAddressCommentID: response.data.id })))
+    }
+  })
 }
 
 const closedIssue = async body => {
-  const pr = pullRequest(body) 
-  console.log('closedIssue', pr)
+  const pr = pullRequest(body)
+  getPRState(pr).then(state => {
+    console.log('closedIssue', pr, state)
 
-  getPRState(pr)
-    .then(doc => {
-      let state = doc.data()
+    if (isBlank(state.payee)) {
+      console.warn('PR was closed without ever setting payee')
+    }
 
-      if (isPresent(state.payee)) {
-        if (isBlank(state.paidTo)) {
-          createRewardedComment(pr, state)
-            .then(response => setPRState(pr, _.assign({}, state, { paidTo: state.payee })))
-        } else if (isBlank(state.rewardClaimedCommentID)) {
-          createRewardClaimedCommnt(pr, state)
-            .then(response => setPRState(pr, _.assign({}, state, { rewardClaimedCommentID: response.data.id })))
-        }
-      }
-    })
+    if (isBlank(state.paidTo)) {
+      createRewardedComment(pr, state)
+        .then(response => setPRState(pr, _.assign({}, state, { paidTo: state.payee })))
+    } else if (isBlank(state.rewardClaimedCommentID)) {
+      createRewardClaimedCommnt(pr, state)
+        .then(response => setPRState(pr, _.assign({}, state, { rewardClaimedCommentID: response.data.id })))
+    }
+  })
 }
 
 module.exports = router

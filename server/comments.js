@@ -55,7 +55,7 @@ ${l18nComment(lang, 'commandsAndOptionsText')}`,
     language: () => 'Yarrrrgh',
     thankyou: () => `Aye, I recognize that address sailor. There be treasure awaitin'.`,
     unrecognized: () => `Ach, dat be no cant I'd recognize.`,
-    paid: (lang, sender, address) => `Ahoy, @${sender}, there be treasure in your future!\n<img src="https://media.giphy.com/media/l0IynKSD9UkNZ88a4/giphy-downsized.gif"/>`,
+    paid: (lang, sender) => `Ahoy, @${sender}, there be treasure in your future!\n<img src="https://media.giphy.com/media/l0IynKSD9UkNZ88a4/giphy-downsized.gif"/>`,
     claimed: () => `Yarrr, there be no treasure 'ere ☠️`
   }
 }

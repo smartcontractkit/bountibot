@@ -101,7 +101,8 @@ const createNoAddressComment = (pr, state) => {
 }
 
 const createRewardableComment = (pr, state) => {
-  const { sender, payee } = pr
+  const { sender } = pr
+  const { payee } = state
   return createComment(pr, state, ['thankyou', sender, payee])
 }
 
@@ -110,7 +111,8 @@ const createUnrecognizedCommandComment = (pr, state, command) => {
 }
 
 const createRewardedComment = (pr, state) => {
-  const { sender, payee } = pr
+  const { sender } = pr
+  const { payee } = state
   return createComment(pr, state, ['paid', sender, payee])
 }
 
@@ -143,12 +145,11 @@ const updatedComment = async body => {
   getPRState(pr).then(state => {
     const match = (body.comment.body || '').match(commandRegex)
     if (match) {
-      console.log('match', match)
       switch (match[1]) {
         case 'pay':
           if (isPresent(match[3])) {
             setPRState(pr, _.assign({}, state, { payee: match[3] }))
-              .then(state => createRewardableComment(pr, state, state.payee))
+              .then(state => createRewardableComment(pr, state))
           } else {
             createComment(pr, state, ['missingPayAddress'])
           }
@@ -212,7 +213,7 @@ const editedIssue = async body => {
       if (state.payee !== match[1]) {
         console.log('Creating rewardable comment', match[1])
         setPRState(pr, _.assign({}, state, { payee: match[1] }))
-          .then(state => createRewardableComment(pr, state))
+          .then(state => console.log('state', state) || createRewardableComment(pr, state))
           .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
         return
       }

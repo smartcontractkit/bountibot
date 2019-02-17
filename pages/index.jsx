@@ -24,8 +24,8 @@ const Home = ({ seedJokes }) => {
   return (
     <>
       <ul>
-        {jokes.map(j => (
-          <li>{j.message}</li>
+        {jokes.map((j, idx) => (
+          <li key={idx}>{j.message}</li>
         ))}
       </ul>
     </>

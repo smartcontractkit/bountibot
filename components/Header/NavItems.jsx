@@ -41,7 +41,7 @@ const Authenticated = props => {
   return (
     <>
       <Item {...props}>
-        <NavLink href="/my_prs">My PR's</NavLink>
+        <NavLink href="/my_prs">My Submitted PR's</NavLink>
       </Item>
       {props.user.admin ? <Admin {...props} /> : <User {...props} />}
     </>

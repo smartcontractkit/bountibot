@@ -187,7 +187,7 @@ const openedIssue = async body => {
       title: body.pull_request.title,
       id: body.pull_request.number,
       description: body.pull_request.body,
-      paidTo: null
+      userID: body.sender.id
     })
 
     console.log('openedIssue', pr, state)

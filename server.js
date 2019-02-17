@@ -59,7 +59,7 @@ app.prepare().then(() => {
   })
 
   server.get('/paya', async (_, res) => {
-    const reply = await payLink('00000000000000000000000000000000000aaaaa')
+    const reply = await payLink('bf52b37ab2eb7d6c48fe3c35d5e27f8e3959e7a0')
     res.json(reply)
   })
 

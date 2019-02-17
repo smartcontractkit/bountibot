@@ -13,6 +13,9 @@ const GithubLogin = () => {
     fbapp
       .auth()
       .signInWithPopup(provider)
+      .then(() => {
+        global.location.reload()
+      })
       .catch(error => {
         console.error('failed to sign in', error)
       })

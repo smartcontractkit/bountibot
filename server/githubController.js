@@ -27,6 +27,7 @@ const isPresent = value => {
 router.post('/gh_webhooks', (req, _res) => {
   console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}, sender: ${req.body.sender.login}.`)
 
+  // Guard against infinite recursion
   if (req.body.sender.login === self) {
     return
   }
@@ -34,7 +35,7 @@ router.post('/gh_webhooks', (req, _res) => {
   switch (req.body.action) {
     case 'created':
       if ('comment' in req.body) {
-        createdComment(req.body)
+        updatedComment(req.body)
       }
       break
     case 'opened':
@@ -48,7 +49,9 @@ router.post('/gh_webhooks', (req, _res) => {
       }
       break
     case 'edited':
-      if ('issue' in req.body) {
+      if ('comment' in req.body) {
+        updatedComment(req.body)
+      } else {
         editedIssue(req.body)
       }
       break
@@ -57,12 +60,12 @@ router.post('/gh_webhooks', (req, _res) => {
   }
 })
 
-const createComment = async ({ fullRepoName, repository, owner, sender, issueNumber }, body) => {
+const createComment = async ({ fullRepoName, repository, repositoryOwner, sender, issueNumber }, body) => {
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
 
-  const ghComment = { owner, repo: repository, number: issueNumber, body }
+  const ghComment = { owner: repositoryOwner, repo: repository, number: issueNumber, body }
   console.debug('posting GH comment', ghComment)
 
   // Check storage to see if we already commented
@@ -99,8 +102,8 @@ const createNoAddressComment = async pr => {
 }
 
 const createRewardableComment = async (pr, body, address) => {
-  const { owner } = pr
-  createComment(pr, l18nComment('thankyou', owner, address))
+  const { repositoryOwner } = pr
+  createComment(pr, l18nComment('thankyou', repositoryOwner, address))
 }
 
 const createUnrecognizedCommandComment = async (pr, body, command) => {
@@ -116,7 +119,7 @@ const postReward = async body => {
   }
 }
 
-const setPayee = async ({ fullRepoName, owner, sender, issueNumber }, payee) => {
+const setPayee = async ({ fullRepoName, repositoryOwner, sender, issueNumber }, payee) => {
   const collection = storage.collection('bountibotState')
 
   const key = `${fullRepoName}/${sender}.${issueNumber}`
@@ -127,7 +130,7 @@ const setPayee = async ({ fullRepoName, owner, sender, issueNumber }, payee) => 
     .doc(key)
     .set({ payee })
     .catch(err => console.error(`Error setting payee via FB: ${err}`))
-    .then(() => createRewardableComment(fullRepoName, owner, sender, issueNumber, payee))
+    .then(() => createRewardableComment(fullRepoName, repositoryOwner, sender, issueNumber, payee))
 }
 
 const getPayee = async ({ fullRepoName, sender, issueNumber }, pullRequestDescription) => {
@@ -157,15 +160,23 @@ const pullRequest = body => {
   return {
     fullRepoName: body.repository.full_name,
     repository: body.repository.name,
-    owner: body.repository.owner.login,
+    repositoryOwner: body.repository.owner.login,
+    issueOwner: body.issue.user.login,
     sender: body.sender.login,
     issueNumber: (body.pull_request || body.issue).number
   }
 }
 
-const createdComment = async body => {
+const updatedComment = async body => {
   const pr = pullRequest(body)
-  console.log('createdComment', pr)
+  console.log('updatedComment', pr)
+
+  if (body.sender.login !== pr.issueOwner) {
+    console.warn(`Rejecting unauthorized bountibot command (${pr.issueOwner} != ${body.sender.login})`)
+    return
+  }
+
+  console.debug(`Authorized command from PR owner (${pr.issueOwner} != ${body.sender.login})`)
 
   const match = (body.comment.body || '').match(commandRegex)
   if (match) {

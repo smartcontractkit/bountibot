@@ -6,16 +6,8 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Typography from '@material-ui/core/Typography'
-import Author from './PaymentsTable/Author'
 import Pr from './PaymentsTable/Pr'
-
-const status = pr => {
-  if (pr.paidTo) {
-    return 'paid'
-  }
-
-  return 'open'
-}
+import Tx from './PaymentsTable/Tx'
 
 const RenderRows = ({ prs }) => {
   return prs.map(pr => (
@@ -23,13 +15,11 @@ const RenderRows = ({ prs }) => {
       <TableCell>
         <Pr>{pr.id}</Pr>
       </TableCell>
-      <TableCell>{pr.title}</TableCell>
-      <TableCell>{status(pr)}</TableCell>
       <TableCell>
-        <Author>
-          {pr.author}
-        </Author>
+        <Tx>{pr.paidTo}</Tx>
       </TableCell>
+      <TableCell>{pr.amount}</TableCell>
+      <TableCell>{pr.paidAt || '-'}</TableCell>
     </TableRow>
   ))
 }
@@ -53,9 +43,10 @@ const PaymentsTable = ({ prs, emptyMessage }) => {
     <Table>
       <TableHead>
         <TableRow>
-          <TableCell>{t('ID')}</TableCell>
-          <TableCell>{t('Amount')}</TableCell>
-          <TableCell>{t('Paid At')}</TableCell>
+          <TableCell>{t('Pr ID')}</TableCell>
+          <TableCell>{t('Tx ID')}</TableCell>
+          <TableCell>{t('Amount (LINK)')}</TableCell>
+          <TableCell>{t('Paid')}</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>

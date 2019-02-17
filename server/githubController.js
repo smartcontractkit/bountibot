@@ -27,7 +27,7 @@ const isPresent = value => {
 
 const collection = storage.collection('bountibotState')
 
-router.post('/gh_webhooks', ({ body }) => {
+router.post('/gh_webhooks', ({ body }, res) => {
   console.info(`Github Webhook. Action: ${
     body.action}, repository: ${
     body.repository.full_name}, owner: ${
@@ -66,6 +66,8 @@ router.post('/gh_webhooks', ({ body }) => {
     default:
       break
   }
+
+  res.sendStatus(200)
 })
 
 const prStateKey = ({ fullRepoName, sender, issueNumber }) => {

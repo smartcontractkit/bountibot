@@ -4,7 +4,7 @@ const comments = {
   en: {
     noAddressComment: (lang, fullRepoName) =>
       `Greetings, my name is ${botName} 🤖.
-    
+
 We are offering rewards of ${rewardAmount} ${l18nComment(lang, 'currency')} for contributions to ${fullRepoName}.
 
 If you add a ${l18nComment(lang, 'currency')} address to your Github Bio or PR description, like so: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. We will send you ${rewardAmount} ${l18nComment(lang, 'currency')} when this PR is accepted!
@@ -30,13 +30,13 @@ Finally, you can contact us by mentioning @${botName}.
     currency: () => `LINK`,
     unrecognized: command => `The command ${command} is not recognized.`,
     missingPayAddress: () => `\`@${botName} pay\` requires a valid EIP155 address argument`,
-    paid: (lang, sender) => `Check your account @${sender} you should have received ${rewardAmount} ${l18nComment(lang, 'currency')}! 💰💰💰`,
+    paid: (lang, sender) => `Check your [account](https://bountibot-staging.appspot.com/my_payments) @${sender} you should have received ${rewardAmount} ${l18nComment(lang, 'currency')}! 💰💰💰`,
     claimed: () => `🔺 The reward for this pull request has already been claimed. 🔺`,
     language: () => 'Future responses will be in english.',
   },
   sp: {
     noAddressComment: (lang, fullRepoName) => `Aloha! Yo soy ${botName} 🤖.
-    
+
 Estamos ofreciendo ${rewardAmount} para contribuciones a ${fullRepoName}.
 
 Si agrega una dirección de ${l18nComment(lang, 'currency')} a su descripción de Github Bio o PR, así: [bounty: 0x356a04bce728ba4c62a30294a55e6a8600a320b3]. ¡Te enviaremos ${rewardAmount} ${l18nComment(lang, 'currency')} cuando se acepte este PR

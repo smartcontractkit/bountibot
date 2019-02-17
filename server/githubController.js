@@ -79,9 +79,7 @@ const getPRState = pr => {
 }
 
 const setPRState = (pr, data) => {
-  return collection
-    .doc(prStateKey(pr))
-    .set(data)
+  return collection.doc(prStateKey(pr)).set(data).then(() => data)
 }
 
 const createComment = ({ repositoryOwner, repository, issueNumber }, { language }, comment) => {
@@ -92,7 +90,7 @@ const createComment = ({ repositoryOwner, repository, issueNumber }, { language 
     body: l18nComment(language, ...comment)
   }
 
-  console.debug('Posting GH comment', ghComment)
+  console.debug('Posting GH comment', ghComment, 'using language', language)
   return octokit.issues.createComment(ghComment)
 }
 
@@ -101,9 +99,9 @@ const createNoAddressComment = (pr, state) => {
   return createComment(pr, state, ['noAddressComment', fullRepoName])
 }
 
-const createRewardableComment = (pr, state, address) => {
-  const { sender } = pr
-  return createComment(pr, state, ['thankyou', sender, address])
+const createRewardableComment = (pr, state) => {
+  const { sender, payee } = pr
+  return createComment(pr, state, ['thankyou', sender, payee])
 }
 
 const createUnrecognizedCommandComment = (pr, state, command) => {
@@ -152,17 +150,15 @@ const updatedComment = async body => {
       console.log('match', match)
       switch (match[1]) {
         case 'pay':
-          const payee = match[3]
-          if (isPresent(payee)) {
-            setPRState(pr, _.assign({}, state, { payee }))
-              .then(state => createRewardableComment(pr, state, payee))
+          if (isPresent(match[3])) {
+            setPRState(pr, _.assign({}, state, { payee: match[3] }))
+              .then(state => createRewardableComment(pr, state, state.payee))
           } else {
             createComment(pr, state, ['missingPayAddress'])
           }
           break
         case 'lang':
-          const language = match[3]
-          setPRState(pr, _.assign({}, state, { language }))
+          setPRState(pr, _.assign({}, state, { language: match[3] }))
             .then(state => createComment(pr, state, ['language']))
           break
         default:
@@ -192,10 +188,9 @@ const openedIssue = async body => {
     if (match && isPresent(match[1])) {
       console.log('Payee was found in PR description', match[1])
 
-      state.payee = match[1]
-
       console.log('Creating rewardable comment', match[1])
-      createRewardableComment(pr, state, match[1])
+      setPRState(pr, _.assign({}, state, { payee: match[1] }))
+        .then(state => createRewardableComment(pr, state))
         .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
       return
     }
@@ -218,10 +213,9 @@ const editedIssue = async body => {
       console.log('Payee was found in PR description', match[1])
 
       if (state.payee !== match[1]) {
-        state.payee = match[1]
-
         console.log('Creating rewardable comment', match[1])
-        createRewardableComment(pr, state, match[1])
+        setPRState(pr, _.assign({}, state, { payee: match[1] }))
+          .then(state => createRewardableComment(pr, state))
           .then(response => setPRState(pr, _.assign({}, state, { rewardableCommentID: response.data.id })))
         return
       }
@@ -242,11 +236,12 @@ const closedIssue = async body => {
 
     if (isBlank(state.payee)) {
       console.warn('PR was closed without ever setting payee')
+      return
     }
 
     if (isBlank(state.paidTo)) {
-      createRewardedComment(pr, state)
-        .then(() => setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() })))
+      setPRState(pr, _.assign({}, state, { paidTo: state.payee, paidAt: Date.now() }))
+        .then(state => createRewardedComment(pr, state))
     } else if (isBlank(state.rewardClaimedCommentID)) {
       createRewardClaimedCommnt(pr, state)
         .then(response => setPRState(pr, _.assign({}, state, { rewardClaimedCommentID: response.data.id })))

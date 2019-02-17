@@ -12,7 +12,7 @@ const jobSpecURL = `${chainlinkNodeURL}/v2/specs`
 
 // All hardcoded to ropsten
 const LINKContractAddress = '0x20fe562d797a42dcb3399062ae9546cd06f63280'
-const ShimContractAddress = '0x63ba80AA8111007F7b59546efB777B31D02c08aA'
+const ShimContractAddress = '0xCBa58C719d2468Ff03bB6406294cA6E24B79a053'
 
 // payLink(recipientAddress, amount) requests that the chainlink node pay amount
 // LINK to recipientAddress

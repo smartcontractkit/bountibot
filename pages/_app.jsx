@@ -2,10 +2,13 @@ import React from 'react';
 import App, { Container } from 'next/app';
 import { MuiThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import Header from '../components/Header'
 import JssProvider from 'react-jss/lib/JssProvider';
+import 'firebase/auth'
+import { clientSideFirebase, FirebaseContext } from '../components/FirebaseContext'
+import UserContext from '../components/UserContext'
 import getPageContext from '../src/getPageContext';
 import getInitialConfig from '../src/getInitialConfig'
+import Header from '../components/Header'
 
 class MyApp extends App {
   constructor(props) {
@@ -25,7 +28,7 @@ class MyApp extends App {
 
   render() {
     const { Component, pageProps } = this.props;
-    const { user } = pageProps
+    const { config, user } = pageProps
 
     return (
       <Container>
@@ -45,8 +48,12 @@ class MyApp extends App {
             {/* Pass pageContext to the _document though the renderPage enhancer
                 to render collected styles on server side. */}
             <React.Fragment>
-              <Header user={user} />
-              <Component pageContext={this.pageContext} {...pageProps} />
+              <FirebaseContext.Provider value={clientSideFirebase(config)}>
+                <UserContext.Provider value={user}>
+                  <Header user={user} />
+                  <Component pageContext={this.pageContext} {...pageProps} />
+                </UserContext.Provider>
+              </FirebaseContext.Provider>
             </React.Fragment>
           </MuiThemeProvider>
         </JssProvider>

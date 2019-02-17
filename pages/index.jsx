@@ -22,14 +22,13 @@ const Home = ({ seedJokes }) => {
   })
 
   return (
-    <React.Fragment>
-      <div>Welcome to next.js!</div>
+    <>
       <ul>
         {jokes.map(j => (
           <li>{j.message}</li>
         ))}
       </ul>
-    </React.Fragment>
+    </>
   )
 }
 

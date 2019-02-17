@@ -17,7 +17,7 @@ const octokit = new Octokit({
 })
 
 const isBlank = value => {
-  return (_.isEmpty(value) && !_.isNumber(value) || _.isNaN(value))
+  return (_.isEmpty(value) && !_.isNumber(value)) || _.isNaN(value)
 }
 
 const isPresent = value => {
@@ -26,35 +26,46 @@ const isPresent = value => {
 
 const collection = storage.collection('bountibotState')
 
-router.post('/gh_webhooks', (req, _res) => {
-  console.info(`Github Webhook. Action: ${req.body.action}, repository: ${req.body.repository.full_name}, owner: ${req.body.repository.owner.login}, sender: ${req.body.sender.login}.`)
+router.post('/gh_webhooks', ({ body }) => {
+  console.info(`Github Webhook. Action: ${
+    body.action}, repository: ${
+    body.repository.full_name}, owner: ${
+      body.repository.owner.login
+    }, sender: ${body.sender.login}.`
+  )
 
   // Guard against infinite recursion
-  if (req.body.sender.login === self) {
-    return
-  }
+  //if (body.sender.login === self) {
+    //return
+  //}
 
-  switch (req.body.action) {
+  switch (body.action) {
     case 'created':
-      if ('comment' in req.body) {
-        updatedComment(req.body)
+      if (body.sender.login === self) {
+        return
+      }
+      if ('comment' in body) {
+        updatedComment(body)
       }
       break
     case 'opened':
-      if ('pull_request' in req.body) {
-        openedIssue(req.body)
+      if ('pull_request' in body) {
+        openedIssue(body)
       }
       break
     case 'closed':
-      if ('pull_request' in req.body) {
-        closedIssue(req.body)
+      if ('pull_request' in body) {
+        closedIssue(body)
       }
       break
     case 'edited':
-      if ('comment' in req.body) {
-        updatedComment(req.body)
+      if (body.sender.login === self) {
+        return
+      }
+      if ('comment' in body) {
+        updatedComment(body)
       } else {
-        editedIssue(req.body)
+        editedIssue(body)
       }
       break
     default:
@@ -123,13 +134,9 @@ const createUnrecognizedCommandComment = async (pr, body, command) => {
   createComment(pr, l18nComment('unrecognized', command))
 }
 
-const postReward = async body => {
+const postReward = async (pr, payee) => {
   // TODO: determine if it was actually approved and merged
-  const match = ((body.pull_request || body.issue).body || '').match(addressRegex)
-  if (match) {
-    // TODO: Load payee from firebase
-    reward(match[1], rewardAmount)
-  }
+  setPRState(pr, { paidTo: payee })
 }
 
 const setLanguage = async (pr, language) => {
@@ -154,6 +161,8 @@ const getPayee = async (pr, pullRequestDescription) => {
       console.log('Payee was found in PR description', match[1])
       return match[1]
     }
+
+    return null
   })
 }
 
@@ -162,7 +171,7 @@ const pullRequest = body => {
     fullRepoName: body.repository.full_name,
     repository: body.repository.name,
     repositoryOwner: body.repository.owner.login,
-    issueOwner: body.issue.user.login,
+    issueOwner: (body.pull_request || body.issue).user.login,
     sender: body.sender.login,
     issueNumber: (body.pull_request || body.issue).number
   }

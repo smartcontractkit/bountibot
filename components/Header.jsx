@@ -7,13 +7,13 @@ import Profile from './Header/Profile'
 
 const Header = props => {
   return (
-    <AppBar position="static">
+    <AppBar position="static" elevation={1}>
       <Toolbar>
         <Grid container>
-          <Grid item xs={10}>
+          <Grid item xs={9}>
             <NavItems {...props} />
           </Grid>
-          <Grid item xs={2}>
+          <Grid item xs={3}>
             <Profile {...props} />
           </Grid>
         </Grid>

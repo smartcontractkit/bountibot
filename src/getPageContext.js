@@ -4,7 +4,14 @@ import { SheetsRegistry } from 'jss'
 import { createMuiTheme, createGenerateClassName } from '@material-ui/core/styles'
 
 const theme = createMuiTheme({
-  palette: {},
+  palette: {
+    primary: {
+      main: '#fff'
+    },
+    secondary: {
+      main: '#444'
+    }
+  },
   typography: {
     // Use the system font instead of the default Roboto font.
     fontFamily: ['"Lato"', 'sans-serif'].join(',')

@@ -1,10 +1,19 @@
 import React, { useContext } from 'react'
+import { withStyles } from '@material-ui/core/styles'
 import Button from '@material-ui/core/Button'
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import { FirebaseContext } from '../FirebaseContext'
 
-const GithubLogin = () => {
+const styles = _theme => {
+  return {
+    button: {
+      textTransform: 'none'
+    }
+  }
+}
+
+const GithubLogin = ({ classes }) => {
   const fbapp = useContext(FirebaseContext)
 
   const login = async () => {
@@ -22,10 +31,14 @@ const GithubLogin = () => {
   }
 
   return (
-    <Button variant="contained" onClick={login}>
-      Sign In w GitHub
+    <Button
+      variant="contained"
+      className={classes.button}
+      onClick={login}
+    >
+      Sign In via GitHub
     </Button>
   )
 }
 
-export default GithubLogin
+export default withStyles(styles)(GithubLogin)

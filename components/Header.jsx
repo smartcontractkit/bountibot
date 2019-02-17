@@ -9,7 +9,7 @@ const Header = props => {
   return (
     <AppBar position="static" elevation={1}>
       <Toolbar>
-        <Grid container>
+        <Grid container alignItems="center">
           <Grid item xs={9}>
             <NavItems {...props} />
           </Grid>
